@@ -36,45 +36,38 @@ package com.geocat.ingester.model.linkchecker;
 import com.geocat.ingester.model.linkchecker.helper.ServiceMetadataDocumentState;
 import com.geocat.ingester.model.linkchecker.helper.ServiceMetadataRecord;
 
-import javax.persistence.Column;
-import javax.persistence.DiscriminatorValue;
-import javax.persistence.Entity;
-import javax.persistence.EnumType;
-import javax.persistence.Enumerated;
-import javax.persistence.PrePersist;
-import javax.persistence.PreUpdate;
+import javax.persistence.*;
 
+
+//represents a harvested (local) Service document
 @Entity
 @DiscriminatorValue("LocalServiceMetadataRecord")
 public class LocalServiceMetadataRecord extends ServiceMetadataRecord {
 
+    //processing state of the document
     @Enumerated(EnumType.STRING)
     @Column(columnDefinition = "varchar(20)")
     ServiceMetadataDocumentState state;
 
+    //which job this is apart of
     @Column(columnDefinition = "varchar(40)")
     private String linkCheckJobId;
 
+    // from the harvester - what is the harvester's record ID for this document?
     private long harvesterMetadataRecordId;
 
+    // for display - info about this object
     @Column(columnDefinition = "text")
     private String summary;
 
-    @Column(columnDefinition = "text")
-    private String errorMessage;
+
+    //-----------------------------
 
 
     public LocalServiceMetadataRecord(){
         super();
     }
 
-    public String getErrorMessage() {
-        return errorMessage;
-    }
-
-    public void setErrorMessage(String errorMessage) {
-        this.errorMessage = errorMessage;
-    }
 
     public String getLinkCheckJobId() {
         return linkCheckJobId;

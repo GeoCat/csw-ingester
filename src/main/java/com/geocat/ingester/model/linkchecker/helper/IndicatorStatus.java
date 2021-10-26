@@ -31,15 +31,10 @@
  *  ==============================================================================
  */
 
-package com.geocat.ingester.dao.linkchecker;
+package com.geocat.ingester.model.linkchecker.helper;
 
-import com.geocat.ingester.model.linkchecker.CapabilitiesRemoteDatasetMetadataDocument;
-import org.springframework.context.annotation.Scope;
-import org.springframework.data.repository.CrudRepository;
-import org.springframework.stereotype.Component;
-
-
-@Component
-@Scope("prototype")
-public interface CapabilitiesRemoteDatasetMetadataDocumentRepo extends CrudRepository<CapabilitiesRemoteDatasetMetadataDocument, Long> {
+// status of an indicator
+// usually NULL means it hasn't been evaluated yet (i.e. UNRUN)
+public enum IndicatorStatus {
+    PASS, FAIL, UNRUN
 }

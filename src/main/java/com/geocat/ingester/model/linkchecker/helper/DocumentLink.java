@@ -33,29 +33,42 @@
 
 package com.geocat.ingester.model.linkchecker.helper;
 
+
 import com.geocat.ingester.model.linkchecker.CapabilitiesDocument;
 
-import javax.persistence.Column;
-import javax.persistence.MappedSuperclass;
-import javax.persistence.Transient;
+import javax.persistence.*;
 
+//Represents a link in a document
 @MappedSuperclass
 public abstract class DocumentLink extends  RetrievableSimpleLink {
 
-
+    //if the operation name was attached to the link, its recorded here (see XML XSL)
     @Column(columnDefinition = "text")
     String operationName;
+
+    //if the protocol was attached to the link, its recorded here (see XML XSL)
     @Column(columnDefinition = "text")
     String protocol;
+
+    //if the function was attached to the link, its recorded here (see XML XSL)
     @Column(columnDefinition = "text")
     String function;
 
+    //not saved - if this resolved to a capabilities document, temporarily store it here.
     @Transient
     private CapabilitiesDocument capabilitiesDocument;
 
-    public abstract void setCapabilitiesDocument(CapabilitiesDocument document);
-    public abstract CapabilitiesDocument getCapabilitiesDocument();
 
+    //---------------------------------------------------------------
+
+
+    public CapabilitiesDocument getCapabilitiesDocument() {
+        return capabilitiesDocument;
+    }
+
+    public void setCapabilitiesDocument(CapabilitiesDocument capabilitiesDocument) {
+        this.capabilitiesDocument = capabilitiesDocument;
+    }
 
     public DocumentLink(){
         super();

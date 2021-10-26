@@ -33,100 +33,99 @@
 
 package com.geocat.ingester.model.linkchecker;
 
-import com.geocat.ingester.model.linkchecker.helper.DocumentLink;
-import com.geocat.ingester.model.linkchecker.helper.UpdateCreateDateTimeEntity;
+
+import com.geocat.ingester.model.linkchecker.helper.*;
 import org.hibernate.annotations.Fetch;
 import org.hibernate.annotations.FetchMode;
 
-import javax.persistence.CascadeType;
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.EnumType;
-import javax.persistence.Enumerated;
-import javax.persistence.FetchType;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.OneToMany;
-import javax.persistence.OneToOne;
-import javax.persistence.PrePersist;
-import javax.persistence.PreUpdate;
+import javax.persistence.*;
 import java.util.ArrayList;
 import java.util.List;
 
+
+//represent a capabilities document
 @Entity
+@IdClass(SHA2JobIdCompositeKey.class)
 public class CapabilitiesDocument extends UpdateCreateDateTimeEntity {
 
-
+    //sha2 of the XML's text
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private long capabilitiesDocumentId;
-
     @Column(columnDefinition = "varchar(64)")
     private String sha2;
 
+    //what link check job this is apart of
+    @Id
+    @Column(columnDefinition = "varchar(40)")
+    private String linkCheckJobId;
+
+    @Enumerated(EnumType.STRING)
+    private CapabilitiesDocumentState state;
+
+    //Type of this Capabilities Document (i.e. WFS/WMS/...)
     @Enumerated(EnumType.STRING)
     private CapabilitiesType capabilitiesDocumentType;
-    //
-//    @OneToOne(cascade = CascadeType.ALL,fetch = FetchType.EAGER)
-//    @JoinColumn(name = "serviceDocumentLinkId" )
-    @OneToOne(mappedBy = "capabilitiesDocument",cascade = {CascadeType.PERSIST,CascadeType.MERGE})
-    private ServiceDocumentLink serviceDocumentLink;
 
-    @OneToOne(mappedBy = "capabilitiesDocument",cascade = {CascadeType.PERSIST,CascadeType.MERGE})
-    private DatasetDocumentLink datasetDocumentLink;
 
+    //does this XML CapabilitiesDocument have extended capabilities (i.e. <inspire_ds:ExtendedCapabilities>)
     @Enumerated(EnumType.STRING)
     @Column(columnDefinition = "varchar(20)")
     private IndicatorStatus Indicator_HasExtendedCapabilities;
 
+    //extended capabilities - does it have a reference to a service metadata?
     @Enumerated(EnumType.STRING)
     @Column(columnDefinition = "varchar(20)")
     private IndicatorStatus Indicator_HasServiceMetadataLink;
 
+    //link to the service metadata referenced in the XML's ExtendedCapabilities
     @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.EAGER )
     @JoinColumn(name = "remoteServiceMetadataRecordLinkId")
     private RemoteServiceMetadataRecordLink remoteServiceMetadataRecordLink;
 
 
-    @OneToMany(mappedBy = "capabilitiesDocument",
+    //list of the links to Datasets (i.e. one for each layer)
+    @OneToMany(//mappedBy = "capabilitiesDocument",
             cascade = {CascadeType.ALL}, fetch = FetchType.EAGER)
     @Fetch(value = FetchMode.SUBSELECT)
-    private List<CapabilitiesDatasetMetadataLink> capabilitiesDatasetMetadataLinkList;
+    @JoinColumns(
+            {
+                    @JoinColumn(name="cap_sha2",referencedColumnName = "sha2"),
+                    @JoinColumn(name="cap_jobId",referencedColumnName = "linkcheckjobid")
+            }
+    )
+    private List< CapabilitiesDatasetMetadataLink> capabilitiesDatasetMetadataLinkList;
 
 
+    //number of layers (CapabilitiesDatasetMetadataLink) in this document -- saved for easy access
+    // i.e. capabilitiesDatasetMetadataLinkList.size()
+    private Integer numberOfDatasetLinks;
+
+    // summary for display
     @Column(columnDefinition = "text")
     private String summary;
 
 
     public CapabilitiesDocument(){
         this.capabilitiesDatasetMetadataLinkList = new ArrayList<>();
+        this.state = CapabilitiesDocumentState.CREATED;
     }
 
     //---------------------------------------------------------------------------
 
-    public DatasetDocumentLink getDatasetDocumentLink() {
-        return datasetDocumentLink;
+
+    public CapabilitiesDocumentState getState() {
+        return state;
     }
 
-    public void setDatasetDocumentLink(DatasetDocumentLink datasetDocumentLink) {
-        this.datasetDocumentLink = datasetDocumentLink;
+    public void setState(CapabilitiesDocumentState state) {
+        this.state = state;
     }
 
-    public void setParent(DocumentLink link) {
-        if (link instanceof ServiceDocumentLink)
-            setServiceDocumentLink( (ServiceDocumentLink) link);
-        if (link instanceof  DatasetDocumentLink)
-            setDatasetDocumentLink((DatasetDocumentLink) link);
+    public String getLinkCheckJobId() {
+        return linkCheckJobId;
     }
 
-    public long getCapabilitiesDocumentId() {
-        return capabilitiesDocumentId;
-    }
-
-    public void setCapabilitiesDocumentId(long capabilitiesDocumentId) {
-        this.capabilitiesDocumentId = capabilitiesDocumentId;
+    public void setLinkCheckJobId(String linkCheckJobId) {
+        this.linkCheckJobId = linkCheckJobId;
     }
 
     public String getSha2() {
@@ -137,13 +136,6 @@ public class CapabilitiesDocument extends UpdateCreateDateTimeEntity {
         this.sha2 = sha2;
     }
 
-    public ServiceDocumentLink getServiceDocumentLink() {
-        return serviceDocumentLink;
-    }
-
-    public void setServiceDocumentLink(ServiceDocumentLink serviceDocumentLink) {
-        this.serviceDocumentLink = serviceDocumentLink;
-    }
 
     public CapabilitiesType getCapabilitiesDocumentType() {
         return capabilitiesDocumentType;
@@ -192,12 +184,14 @@ public class CapabilitiesDocument extends UpdateCreateDateTimeEntity {
     protected void onUpdate() {
         super.onUpdate();
         this.summary = this.toString();
+        this.numberOfDatasetLinks = this.capabilitiesDatasetMetadataLinkList.size();
     }
 
     @PrePersist
     protected void onInsert() {
         super.onInsert();
         this.summary = this.toString();
+        this.numberOfDatasetLinks = this.capabilitiesDatasetMetadataLinkList.size();
     }
 
     //---------------------------------------------------------------------------
@@ -210,7 +204,7 @@ public class CapabilitiesDocument extends UpdateCreateDateTimeEntity {
     public String toString(int indentSpaces) {
         String indent = "                                                     ".substring(0, indentSpaces);
         String result = indent + "CapabilitiesDocument {\n";
-        result += indent + "      capabilitiesDocumentId: " + capabilitiesDocumentId + "\n";
+       // result += indent + "      capabilitiesDocumentId: " + capabilitiesDocumentId + "\n";
 
         result+= super.toString();
 

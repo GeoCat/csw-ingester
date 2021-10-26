@@ -33,13 +33,15 @@
 
 package com.geocat.ingester.model.linkchecker.helper;
 
+//processing state of a Service Metadata Document
 public enum ServiceMetadataDocumentState {
-    IN_PROGRESS,
+    IN_PROGRESS, // not used because of the way JPA saves objects
     NOT_APPLICABLE, //ie. not a service document
     CREATED, // unprocessed
-    LINKS_EXTRACTED,
-    LINKS_PROCESSED,
+    LINKS_EXTRACTED, // document was parsed and the object model saved
+    LINKS_PROCESSED, // links were actually evaluated (rest of object model populated, indicators set)
+
     LINKS_POSTPROCESSED,
 
-    ERROR
+    ERROR // a problem occurred - could not process this document
 }

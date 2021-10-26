@@ -33,11 +33,15 @@
 
 package com.geocat.ingester.model.linkchecker.helper;
 
+
+// status of a link in the process
 public enum LinkState {
     Created,
-    In_Progress,
+    In_Progress, // not used because of the way that JPA saves objects
 
     Complete,
+
+    Redundant, // there's another link with the same URL
 
     ERROR
 }

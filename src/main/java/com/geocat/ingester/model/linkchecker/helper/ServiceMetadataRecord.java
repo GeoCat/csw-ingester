@@ -33,29 +33,17 @@
 
 package com.geocat.ingester.model.linkchecker.helper;
 
-import com.geocat.ingester.model.linkchecker.IndicatorStatus;
 import com.geocat.ingester.model.linkchecker.OperatesOnLink;
 import com.geocat.ingester.model.linkchecker.ServiceDocumentLink;
 import org.hibernate.annotations.Fetch;
 import org.hibernate.annotations.FetchMode;
 
-import javax.persistence.CascadeType;
-import javax.persistence.Column;
-import javax.persistence.DiscriminatorColumn;
-import javax.persistence.DiscriminatorType;
-import javax.persistence.Entity;
-import javax.persistence.EnumType;
-import javax.persistence.Enumerated;
-import javax.persistence.FetchType;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.Inheritance;
-import javax.persistence.InheritanceType;
-import javax.persistence.OneToMany;
-import java.util.ArrayList;
-import java.util.List;
+import javax.persistence.*;
+import java.util.HashSet;
+import java.util.Set;
 
+
+//base class for Service Metadata records
 @Entity
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
 @DiscriminatorColumn(name = "service_record_type",
@@ -66,24 +54,30 @@ public class ServiceMetadataRecord extends MetadataRecord {
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
     private long serviceMetadataDocumentId;
 
-    @Column(columnDefinition = "text")
+    //type of service
     //i.e. view/download/discovery
+    @Column(columnDefinition = "text")
     private String metadataServiceType;
 
+    //number of links found in the document
+    // i.e. serviceDocumentLinks.size()
     private Integer numberOfLinksFound;
+
+    //number of operatesOn found in the document
+    // i.e. operatesOnLinks.size()
     private Integer numberOfOperatesOnFound;
 
     @OneToMany(mappedBy = "serviceMetadataRecord",
-            cascade = {CascadeType.ALL}, fetch = FetchType.LAZY)
+            cascade = {CascadeType.ALL}, fetch = FetchType.EAGER)
     // @JoinColumn(name="serviceMetadataRecordId")
     @Fetch(value = FetchMode.SUBSELECT)
-    private List<ServiceDocumentLink> serviceDocumentLinks;
+    private Set<ServiceDocumentLink> serviceDocumentLinks;
 
     @OneToMany(mappedBy = "serviceMetadataRecord",
-            cascade = {CascadeType.ALL}, fetch = FetchType.LAZY)
+            cascade = {CascadeType.ALL}, fetch = FetchType.EAGER)
     // @JoinColumn(name="serviceMetadataRecordId")
     @Fetch(value = FetchMode.SUBSELECT)
-    private List<OperatesOnLink> operatesOnLinks;
+    private Set<OperatesOnLink> operatesOnLinks;
 
 
     //PASS if ANY linked capabilities document has a link to a Service Metadata Record that resolves to a Service Metadata Record.
@@ -92,11 +86,11 @@ public class ServiceMetadataRecord extends MetadataRecord {
     @Column(columnDefinition = "varchar(5)")
     IndicatorStatus INDICATOR_CAPABILITIES_RESOLVES_TO_SERVICE;
 
-    //PASS if ANY linked capabilities document's Service Metadata Record has the same file identifier and the XML documents are the same as our starting service metadata record.
-    // null = not evaluated
-    @Enumerated(EnumType.STRING)
-    @Column(columnDefinition = "varchar(5)")
-    IndicatorStatus INDICATOR_CAPABILITIES_SERVICE_FULLY_MATCHES;
+//    //PASS if ANY linked capabilities document's Service Metadata Record has the same file identifier and the XML documents are the same as our starting service metadata record.
+//    // null = not evaluated
+//    @Enumerated(EnumType.STRING)
+//    @Column(columnDefinition = "varchar(5)")
+//    IndicatorStatus INDICATOR_CAPABILITIES_SERVICE_FULLY_MATCHES;
 
     //PASS if ANY linked capabilities document's Service Metadata Record has the same file identifier as our starting service metadata record.
     // null = not evaluated
@@ -128,8 +122,8 @@ public class ServiceMetadataRecord extends MetadataRecord {
 
     public ServiceMetadataRecord(){
         super();
-        serviceDocumentLinks = new ArrayList<>();
-        operatesOnLinks = new ArrayList<>();
+        serviceDocumentLinks = new HashSet<>();
+        operatesOnLinks =new HashSet<>();
     }
 
     //---------------------------------------------------------------------------
@@ -151,13 +145,13 @@ public class ServiceMetadataRecord extends MetadataRecord {
         this.INDICATOR_CAPABILITIES_RESOLVES_TO_SERVICE = INDICATOR_CAPABILITIES_RESOLVES_TO_SERVICE;
     }
 
-    public IndicatorStatus getINDICATOR_CAPABILITIES_SERVICE_FULLY_MATCHES() {
-        return INDICATOR_CAPABILITIES_SERVICE_FULLY_MATCHES;
-    }
-
-    public void setINDICATOR_CAPABILITIES_SERVICE_FULLY_MATCHES(IndicatorStatus INDICATOR_CAPABILITIES_SERVICE_MATCHES) {
-        this.INDICATOR_CAPABILITIES_SERVICE_FULLY_MATCHES = INDICATOR_CAPABILITIES_SERVICE_MATCHES;
-    }
+//    public IndicatorStatus getINDICATOR_CAPABILITIES_SERVICE_FULLY_MATCHES() {
+//        return INDICATOR_CAPABILITIES_SERVICE_FULLY_MATCHES;
+//    }
+//
+//    public void setINDICATOR_CAPABILITIES_SERVICE_FULLY_MATCHES(IndicatorStatus INDICATOR_CAPABILITIES_SERVICE_MATCHES) {
+//        this.INDICATOR_CAPABILITIES_SERVICE_FULLY_MATCHES = INDICATOR_CAPABILITIES_SERVICE_MATCHES;
+//    }
 
     public IndicatorStatus getINDICATOR_ALL_CAPABILITIES_LAYER_RESOLVE() {
         return INDICATOR_ALL_CAPABILITIES_LAYER_RESOLVE;
@@ -215,19 +209,19 @@ public class ServiceMetadataRecord extends MetadataRecord {
         this.numberOfOperatesOnFound = numberOfOperatesOnFound;
     }
 
-    public List<ServiceDocumentLink> getServiceDocumentLinks() {
+    public Set<ServiceDocumentLink> getServiceDocumentLinks() {
         return serviceDocumentLinks;
     }
 
-    public void setServiceDocumentLinks(List<ServiceDocumentLink> serviceDocumentLinks) {
+    public void setServiceDocumentLinks(Set<ServiceDocumentLink> serviceDocumentLinks) {
         this.serviceDocumentLinks = serviceDocumentLinks;
     }
 
-    public List<OperatesOnLink> getOperatesOnLinks() {
+    public Set<OperatesOnLink> getOperatesOnLinks() {
         return operatesOnLinks;
     }
 
-    public void setOperatesOnLinks(List<OperatesOnLink> operatesOnLinks) {
+    public void setOperatesOnLinks(Set<OperatesOnLink> operatesOnLinks) {
         this.operatesOnLinks = operatesOnLinks;
     }
 

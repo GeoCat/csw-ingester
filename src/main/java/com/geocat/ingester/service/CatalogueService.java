@@ -41,6 +41,30 @@ public class CatalogueService {
     @Autowired
     private HarvestingSettingRepository harvestingSettingRepo;
 
+
+    public boolean indicatorsChanged(Map<String, String> indicators_ingesting, Set<MetadataIndicator> indicators_existing_set) {
+        if (indicators_existing_set == null)
+            indicators_existing_set  = new HashSet<>();
+        if (indicators_ingesting == null)
+            indicators_ingesting = new HashMap<>();
+
+        if (indicators_ingesting.size() != indicators_existing_set.size())
+            return true; //obviously not the same!
+
+        for(MetadataIndicator existing_indicator : indicators_existing_set) {
+            String ingestingVal = indicators_ingesting.get(existing_indicator.getName());
+            String existingVal = existing_indicator.getValue();
+            if ( (ingestingVal == null) && (existingVal !=null))
+                return true; // null and not-null
+            if ( (ingestingVal != null) && (existingVal ==null))
+                return true; // null and not-null
+            if ( (ingestingVal == null) && (existingVal ==null))
+                continue; //both null
+            if (!ingestingVal.equals(existingVal))
+                return true;
+        }
+        return false;
+    }
     /**
      * Creates/updates a metadata record.
      *
@@ -83,7 +107,7 @@ public class CatalogueService {
                 metadata = metadataOptional.get();
 
                 String sha2 = computeSHA2(metadata.getData());
-                if (sha2.equalsIgnoreCase(metadataRecord.getSha2())) {
+                if (sha2.equalsIgnoreCase(metadataRecord.getSha2())  && !indicatorsChanged(metadataRecord.getIndicators(),metadata.getIndicators()) ) {
                     // Don't process the record, it doesn't have changes
                     metadataUuidList.put(metadataUuid, Boolean.FALSE);
                     continue;

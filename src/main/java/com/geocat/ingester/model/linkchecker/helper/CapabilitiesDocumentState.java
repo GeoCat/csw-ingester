@@ -31,63 +31,12 @@
  *  ==============================================================================
  */
 
-package com.geocat.ingester.model.linkchecker;
+package com.geocat.ingester.model.linkchecker.helper;
 
-import com.geocat.ingester.model.linkchecker.helper.PartialDownloadHint;
-import com.geocat.ingester.model.linkchecker.helper.RetrievableSimpleLink;
-
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.PrePersist;
-import javax.persistence.PreUpdate;
-
-@Entity
-public class CapabilitiesServiceMetadataLink extends RetrievableSimpleLink {
-
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private long capabilitiesServiceMetadataLinkId;
-    @Column(columnDefinition = "text")
-    private String summary;
-
-
-    public CapabilitiesServiceMetadataLink() {
-        super.setPartialDownloadHint(PartialDownloadHint.CAPABILITIES_ONLY);
-    }
-
-
-    //---------------------------------------------------------------------------
-
-
-    //---------------------------------------------------------------------------
-
-    @PreUpdate
-    protected void onUpdate() {
-        super.onUpdate();
-        this.summary = this.toString();
-    }
-
-    @PrePersist
-    protected void onInsert() {
-        super.onInsert();
-        this.summary = this.toString();
-    }
-
-    //---------------------------------------------------------------------------
-
-
-    @Override
-    public String toString() {
-        String result = "CapabilitiesServiceMetadataLink {\n";
-        result += "      capabilitiesServiceMetadataLinkId: " + capabilitiesServiceMetadataLinkId + "\n";
-        result += "\n";
-        result += super.toString();
-
-        result += "  }";
-        return result;
-    }
+public enum CapabilitiesDocumentState {
+    CREATED, //nothing done
+    DOWNLOADED, //document XML downloaded from server
+    PARSED, // links saved to DB (service and dataset)
+    COMPLETE, // links retrieved and put in DB
+    ERROR
 }

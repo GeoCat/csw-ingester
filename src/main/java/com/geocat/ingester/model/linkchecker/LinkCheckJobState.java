@@ -33,14 +33,19 @@
 
 package com.geocat.ingester.model.linkchecker;
 
+//state of the link check job
 public enum LinkCheckJobState {
-    CREATING,
+    CREATING, // not really started
 
-    FINDING_LINKS, LINKS_FOUND,
+    //Go through each of the documents harvested, parse the XML, and save the results in the linkchecker database (as per the diagram). This is extracting links
+    FINDING_LINKS, LINKS_FOUND, // initial processing of do
 
+    //  go through each of the documents (in the link checker database) and process all the links (i.e. resolve them, parse the capabilities document, fetch the DS link from the layers).
     CHECKING_LINKS, LINKS_CHECKED,
+
+    POST_PROCESSING,
 
     COMPLETE,
 
-    ERROR, USERABORT
+    ERROR, USERABORT  // abnormal ending
 }

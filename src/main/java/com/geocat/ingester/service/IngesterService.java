@@ -12,11 +12,12 @@ import com.geocat.ingester.model.harvester.EndpointJob;
 import com.geocat.ingester.model.harvester.HarvestJob;
 import com.geocat.ingester.model.harvester.MetadataRecordXml;
 import com.geocat.ingester.model.ingester.IngestJobState;
-import com.geocat.ingester.model.linkchecker.CapabilitiesType;
-import com.geocat.ingester.model.linkchecker.IndicatorStatus;
+
 import com.geocat.ingester.model.linkchecker.LinkCheckJob;
 import com.geocat.ingester.model.linkchecker.LocalDatasetMetadataRecord;
 import com.geocat.ingester.model.linkchecker.LocalServiceMetadataRecord;
+import com.geocat.ingester.model.linkchecker.helper.CapabilitiesType;
+import com.geocat.ingester.model.linkchecker.helper.IndicatorStatus;
 import com.geocat.ingester.model.metadata.HarvesterConfiguration;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
@@ -277,7 +278,7 @@ public class IngesterService {
             addIndicator(metadata, "INDICATOR_CAPABILITIES_TYPE", localServiceMetadataRecord.get(0).getINDICATOR_CAPABILITIES_TYPE());
             addIndicator(metadata, "INDICATOR_CAPABILITIES_RESOLVES_TO_SERVICE", localServiceMetadataRecord.get(0).getINDICATOR_CAPABILITIES_RESOLVES_TO_SERVICE());
             addIndicator(metadata, "INDICATOR_CAPABILITIES_SERVICE_FILE_ID_MATCHES", localServiceMetadataRecord.get(0).getINDICATOR_CAPABILITIES_SERVICE_FILE_ID_MATCHES());
-            addIndicator(metadata, "INDICATOR_CAPABILITIES_SERVICE_FULLY_MATCHES", localServiceMetadataRecord.get(0).getINDICATOR_CAPABILITIES_SERVICE_FULLY_MATCHES());
+           // addIndicator(metadata, "INDICATOR_CAPABILITIES_SERVICE_FULLY_MATCHES", localServiceMetadataRecord.get(0).getINDICATOR_CAPABILITIES_SERVICE_FULLY_MATCHES());
             addIndicator(metadata, "INDICATOR_RESOLVES_TO_CAPABILITIES", localServiceMetadataRecord.get(0).getINDICATOR_RESOLVES_TO_CAPABILITIES());
         } else {
             List<LocalDatasetMetadataRecord> localDatasetMetadataRecord = localDatasetMetadataRecordRepo.findAllByFileIdentifierAndLinkCheckJobId(metadata.getRecordIdentifier(), linkCheckJobId);

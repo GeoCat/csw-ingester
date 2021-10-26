@@ -33,7 +33,9 @@
 
 package com.geocat.ingester.model.linkchecker.helper;
 
-//null = always download
+// What type of data is expected to be returned by server?
+// If the wrong type of data is returned, then the link is only partially downloaded.
+// null = always fully read
 public enum PartialDownloadHint {
     ALWAYS_DOWNLOAD,
     XML_ONLY,

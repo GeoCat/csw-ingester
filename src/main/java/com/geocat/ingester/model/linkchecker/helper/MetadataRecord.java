@@ -33,33 +33,36 @@
 
 package com.geocat.ingester.model.linkchecker.helper;
 
-import com.geocat.ingester.model.linkchecker.CapabilitiesType;
-import com.geocat.ingester.model.linkchecker.MetadataDocumentType;
 
-import javax.persistence.Column;
-import javax.persistence.EnumType;
-import javax.persistence.Enumerated;
-import javax.persistence.MappedSuperclass;
-import javax.persistence.Transient;
 
+import javax.persistence.*;
+
+//Base class for information in a metadata record (i.e. <MD_Metadata>....)
 @MappedSuperclass
 public class MetadataRecord extends UpdateCreateDateTimeEntity {
 
-
+    //not saved to DB - use the SHA2 link to get the data from blobstorage
     @Transient
-    public String actualXML; //not saved to DB - use the SHA2 link
+    public String actualXML;
 
+
+    @Column(columnDefinition = "text")
+    private String title;
+
+    //SHA2 of the XMNL Text
     @Column(columnDefinition = "varchar(64)")
     private String sha2;
 
+    //File identifier (see XML XSL)
     @Column(columnDefinition = "text")
     private String fileIdentifier;
 
+    // what type of metadata document is this (service/dataset/series/...)
     @Column(columnDefinition = "varchar(22)")
     @Enumerated(EnumType.STRING)
-    //i.e. will be service
     private MetadataDocumentType metadataRecordType;
 
+    // summary of this document's processing in a somewhat human-readable format
     @Column(columnDefinition = "text")
     private String humanReadable;
 
@@ -81,6 +84,14 @@ public class MetadataRecord extends UpdateCreateDateTimeEntity {
 
     //---------------------------------------------------------------------------
 
+
+    public String getTitle() {
+        return title;
+    }
+
+    public void setTitle(String title) {
+        this.title = title;
+    }
 
     public Integer getINDICATOR_RESOLVES_TO_CAPABILITIES() {
         return INDICATOR_RESOLVES_TO_CAPABILITIES;
@@ -130,13 +141,13 @@ public class MetadataRecord extends UpdateCreateDateTimeEntity {
         this.metadataRecordType = metadataRecordType;
     }
 
-    protected void onUpdate() {
+     protected void onUpdate() {
         super.onUpdate();
-    }
+     }
 
-    protected void onInsert() {
+     protected void onInsert() {
         super.onInsert();
-    }
+     }
 
     //---------------------------------------------------------------------------
 

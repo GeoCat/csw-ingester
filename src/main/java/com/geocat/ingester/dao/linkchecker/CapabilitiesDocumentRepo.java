@@ -34,7 +34,7 @@
 package com.geocat.ingester.dao.linkchecker;
 
 import com.geocat.ingester.model.linkchecker.CapabilitiesDocument;
-import com.geocat.ingester.model.linkchecker.CapabilitiesType;
+import com.geocat.ingester.model.linkchecker.helper.CapabilitiesType;
 import org.springframework.context.annotation.Scope;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Component;

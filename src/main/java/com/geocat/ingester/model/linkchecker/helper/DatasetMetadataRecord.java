@@ -34,29 +34,26 @@
 package com.geocat.ingester.model.linkchecker.helper;
 
 
-import com.geocat.ingester.model.linkchecker.DatasetDocumentLink;
-import com.geocat.ingester.model.linkchecker.IndicatorStatus;
-import org.hibernate.annotations.Fetch;
+ import com.geocat.ingester.model.linkchecker.DatasetDocumentLink;
+ import org.hibernate.annotations.Fetch;
 import org.hibernate.annotations.FetchMode;
 
-import javax.persistence.CascadeType;
-import javax.persistence.Column;
-import javax.persistence.DiscriminatorColumn;
-import javax.persistence.DiscriminatorType;
-import javax.persistence.Entity;
-import javax.persistence.EnumType;
-import javax.persistence.Enumerated;
-import javax.persistence.FetchType;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.Inheritance;
-import javax.persistence.InheritanceType;
-import javax.persistence.OneToMany;
+import javax.persistence.*;
 import java.util.ArrayList;
-import java.util.List;
+ import java.util.List;
 
+
+// Represents a Dataset Metadata Record
 @Entity
+@Table(
+        indexes = {
+                @Index(
+                        name = "datasetmetadatarecord_linkcheckjobid_idx",
+                        columnList = "linkCheckJobId",
+                        unique = false
+                )
+        }
+)
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
 @DiscriminatorColumn(name = "dataset_record_type",
         discriminatorType = DiscriminatorType.STRING)
@@ -66,13 +63,32 @@ public class DatasetMetadataRecord extends MetadataRecord {
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
     private long datasetMetadataDocumentId;
 
+    // INSPIRE dataset identifier (from document)
     private String datasetIdentifier;
 
+    // number of links found in the document
+    //  i.e. documentLinks.size()
     private Integer numberOfLinksFound;
 
+    //which link check job is this document apart of
+    @Column(columnDefinition = "varchar(40)")
+    private String linkCheckJobId;
+
+
+    //list of SHA2 links to capabilities
+    //   to find cap doc, use linkCheckJobId+SHA2
+    @Column(columnDefinition = "text")
+    private String linksToViewCapabilities;
+
+    //list of SHA2 links to capabilities
+    //   to find cap doc, use linkCheckJobId+SHA2
+    @Column(columnDefinition = "text")
+    private String linksToDownloadCapabilities;
+
+    // all the outgoing links (i.e. capabilities documents) from the document
     @OneToMany(mappedBy = "datasetMetadataRecord",
-            cascade = {CascadeType.ALL}, fetch = FetchType.LAZY)
-    @Fetch(value = FetchMode.SUBSELECT)
+            cascade = {CascadeType.ALL}, fetch = FetchType.EAGER)
+    @Fetch(value = FetchMode.JOIN)
     private List<DatasetDocumentLink> documentLinks;
 
     //PASS if ANY of the capabilities documents has a layer link (dataset) that matches this document (file id and dataset id).
@@ -93,11 +109,64 @@ public class DatasetMetadataRecord extends MetadataRecord {
     @Column(columnDefinition = "varchar(5)")
     IndicatorStatus INDICATOR_LAYER_MATCHES_DOWNLOAD;
 
+    //PASS if ANY of the "download" service documents has a operatesOn (dataset) that matches this document (file id and dataset id).
+    // null = not evaluated
+    @Enumerated(EnumType.STRING)
+    @Column(columnDefinition = "varchar(5)")
+    IndicatorStatus INDICATOR_SERVICE_MATCHES_DOWNLOAD;
+
+    //PASS if ANY of the "view" service documents has a operatesOn (dataset) that matches this document (file id and dataset id).
+    // null = not evaluated
+    @Enumerated(EnumType.STRING)
+    @Column(columnDefinition = "varchar(5)")
+    IndicatorStatus INDICATOR_SERVICE_MATCHES_VIEW;
+
+
     //---------------------------------------------------------------------------
 
     public DatasetMetadataRecord() {
         super();
         documentLinks = new ArrayList<>();
+    }
+
+    public String getLinksToViewCapabilities() {
+        return linksToViewCapabilities;
+    }
+
+    public void setLinksToViewCapabilities(String linksToViewCapabilities) {
+        this.linksToViewCapabilities = linksToViewCapabilities;
+    }
+
+    public String getLinksToDownloadCapabilities() {
+        return linksToDownloadCapabilities;
+    }
+
+    public void setLinksToDownloadCapabilities(String linksToDownloadCapabilities) {
+        this.linksToDownloadCapabilities = linksToDownloadCapabilities;
+    }
+
+    public IndicatorStatus getINDICATOR_SERVICE_MATCHES_DOWNLOAD() {
+        return INDICATOR_SERVICE_MATCHES_DOWNLOAD;
+    }
+
+    public void setINDICATOR_SERVICE_MATCHES_DOWNLOAD(IndicatorStatus INDICATOR_SERVICE_MATCHES_DOWNLOAD) {
+        this.INDICATOR_SERVICE_MATCHES_DOWNLOAD = INDICATOR_SERVICE_MATCHES_DOWNLOAD;
+    }
+
+    public IndicatorStatus getINDICATOR_SERVICE_MATCHES_VIEW() {
+        return INDICATOR_SERVICE_MATCHES_VIEW;
+    }
+
+    public void setINDICATOR_SERVICE_MATCHES_VIEW(IndicatorStatus INDICATOR_SERVICE_MATCHES_VIEW) {
+        this.INDICATOR_SERVICE_MATCHES_VIEW = INDICATOR_SERVICE_MATCHES_VIEW;
+    }
+
+    public String getLinkCheckJobId() {
+        return linkCheckJobId;
+    }
+
+    public void setLinkCheckJobId(String linkCheckJobId) {
+        this.linkCheckJobId = linkCheckJobId;
     }
 
     public IndicatorStatus getINDICATOR_LAYER_MATCHES_VIEW() {

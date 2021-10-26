@@ -36,32 +36,45 @@ package com.geocat.ingester.model.linkchecker;
 
 import com.geocat.ingester.model.linkchecker.helper.UpdateCreateDateTimeEntity;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.EnumType;
-import javax.persistence.Enumerated;
-import javax.persistence.Id;
-import javax.persistence.PrePersist;
-import javax.persistence.PreUpdate;
+import javax.persistence.*;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 
+// represents a run of the link checker
 @Entity
-
 public class LinkCheckJob extends UpdateCreateDateTimeEntity {
 
 
     @Id
     @Column(columnDefinition = "varchar(40)")
     private String jobId;
+
+    //GUID of the havest job this is processing
     @Column(columnDefinition = "varchar(40)")
     private String harvestJobId;
+
+    //state of the overall process
     @Enumerated(EnumType.STRING)
-    private LinkCheckJobState state;
+    private  LinkCheckJobState state;
+
+    //important messages - usually errors during a camel route
     @Column(columnDefinition = "text")
     private String messages;
 
+    @Column(columnDefinition = "text")
+    private String longTermTag;
+
+    // how many documents were harvested
     Long numberOfDocumentsInBatch;
+
+    //how many of the harvested documents are service records?
     Long numberOfLocalServiceRecords;
+
+    //how many of the harvested documents are dataset records?
     Long numberOfLocalDatasetRecords;
+
+
+    //------------------------------------
 
     @PrePersist
     protected void onInsert() {
@@ -73,6 +86,16 @@ public class LinkCheckJob extends UpdateCreateDateTimeEntity {
         super.onUpdate();
     }
 
+    //------------------------------------
+
+
+    public String getLongTermTag() {
+        return longTermTag;
+    }
+
+    public void setLongTermTag(String longTermTag) {
+        this.longTermTag = longTermTag;
+    }
 
     public Long getNumberOfLocalServiceRecords() {
         return numberOfLocalServiceRecords;
@@ -114,11 +137,11 @@ public class LinkCheckJob extends UpdateCreateDateTimeEntity {
         this.harvestJobId = harvestJobId;
     }
 
-    public LinkCheckJobState getState() {
+    public  LinkCheckJobState getState() {
         return state;
     }
 
-    public void setState(LinkCheckJobState state) {
+    public void setState( LinkCheckJobState state) {
         this.state = state;
     }
 

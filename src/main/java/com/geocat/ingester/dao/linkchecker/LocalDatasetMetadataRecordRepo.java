@@ -33,8 +33,8 @@
 
 package com.geocat.ingester.dao.linkchecker;
 
+
 import com.geocat.ingester.model.linkchecker.LocalDatasetMetadataRecord;
-import com.geocat.ingester.model.linkchecker.LocalServiceMetadataRecord;
 import com.geocat.ingester.model.linkchecker.helper.StatusQueryItem;
 import org.springframework.context.annotation.Scope;
 import org.springframework.data.jpa.repository.Query;

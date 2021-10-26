@@ -33,38 +33,43 @@
 
 package com.geocat.ingester.model.linkchecker;
 
-
 import com.geocat.ingester.model.linkchecker.helper.PartialDownloadHint;
 import com.geocat.ingester.model.linkchecker.helper.RetrievableSimpleLink;
 
-import javax.persistence.CascadeType;
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.FetchType;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
-import javax.persistence.OneToOne;
-import javax.persistence.PrePersist;
-import javax.persistence.PreUpdate;
+import javax.persistence.*;
 
+// This models all the Dataset links from a capabilities (typically 1 per layer)
 @Entity
 public class CapabilitiesDatasetMetadataLink extends RetrievableSimpleLink {
 
-    @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
-    @JoinColumn(name = "datasetMetadataRecordId")
-    CapabilitiesRemoteDatasetMetadataDocument capabilitiesRemoteDatasetMetadataDocument;
-    @ManyToOne(fetch = FetchType.EAGER,cascade = {CascadeType.ALL})
-    CapabilitiesDocument capabilitiesDocument;
+//    // link to the actual Dataset document (if it resolves to one)
+//    @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+//    @JoinColumn(name = "datasetMetadataRecordId")
+//    @Fetch(value = FetchMode.JOIN)
+//    CapabilitiesRemoteDatasetMetadataDocument capabilitiesRemoteDatasetMetadataDocument;
+
+     @Column(columnDefinition = "text")
+    String fileIdentifier;
+
+     @Column(columnDefinition = "text")
+    String datasetIdentifier;
+
+//    //link back to the capabilities document this link came from
+//    @ManyToOne(fetch = FetchType.EAGER,cascade = {CascadeType.ALL})
+//    CapabilitiesDocument capabilitiesDocument;
+
+    //from the Capabilities document - identity for the layer
     @Column(columnDefinition = "text")
     String identity;
+
+    //store summary info about this
     @Column(columnDefinition = "text")
     String summary;
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long capabilitiesDatasetMetadataLinkId;
+
 
     public CapabilitiesDatasetMetadataLink() {
         this.setPartialDownloadHint(PartialDownloadHint.METADATA_ONLY);
@@ -72,12 +77,21 @@ public class CapabilitiesDatasetMetadataLink extends RetrievableSimpleLink {
 
     //---------------------------------------------------------------------------
 
-    public CapabilitiesRemoteDatasetMetadataDocument getCapabilitiesRemoteDatasetMetadataDocument() {
-        return capabilitiesRemoteDatasetMetadataDocument;
+
+    public String getFileIdentifier() {
+        return fileIdentifier;
     }
 
-    public void setCapabilitiesRemoteDatasetMetadataDocument(CapabilitiesRemoteDatasetMetadataDocument capabilitiesRemoteDatasetMetadataDocument) {
-        this.capabilitiesRemoteDatasetMetadataDocument = capabilitiesRemoteDatasetMetadataDocument;
+    public void setFileIdentifier(String fileIdentifier) {
+        this.fileIdentifier = fileIdentifier;
+    }
+
+    public String getDatasetIdentifier() {
+        return datasetIdentifier;
+    }
+
+    public void setDatasetIdentifier(String datasetIdentifier) {
+        this.datasetIdentifier = datasetIdentifier;
     }
 
     public long getCapabilitiesDatasetMetadataLinkId() {
@@ -88,13 +102,6 @@ public class CapabilitiesDatasetMetadataLink extends RetrievableSimpleLink {
         this.capabilitiesDatasetMetadataLinkId = capabilitiesDatasetMetadataLinkId;
     }
 
-    public CapabilitiesDocument getCapabilitiesDocument() {
-        return capabilitiesDocument;
-    }
-
-    public void setCapabilitiesDocument(CapabilitiesDocument capabilitiesDocument) {
-        this.capabilitiesDocument = capabilitiesDocument;
-    }
 
     public String getIdentity() {
         return identity;
@@ -123,12 +130,13 @@ public class CapabilitiesDatasetMetadataLink extends RetrievableSimpleLink {
         String result = "CapabilitiesDatasetMetadataLink {\n";
         result += "      capabilitiesDatasetMetadataLinkId: " + capabilitiesDatasetMetadataLinkId + "\n";
         result += "      identity: " + identity + "\n";
+        result += "      file Identifier: " + fileIdentifier + "\n";
+        result += "      dataset identifier: " + datasetIdentifier + "\n";
 
         result += "\n";
         result += super.toString();
         result += "\n";
 
-        result += "      has Remote Dataset Metadata Document: " + (getCapabilitiesRemoteDatasetMetadataDocument() != null) + "\n";
 
         result += "  }";
         return result;

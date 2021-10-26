@@ -39,15 +39,22 @@ import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.Table;
 
+//represents a XML document saved from a HTTP request
+// SHA2 should be unique
 @Entity
 @Table(name = "blob_storage")
 public class LinkCheckBlobStorage {
+
+    //sha2 of the object
     @Id
     @Column(columnDefinition = "varchar(64)")
     private String sha2;
 
+    //actual XML
     @Column(columnDefinition = "text", name = "text_value")
     private String textValue;
+
+    //------------------------------------------------------
 
     public String getSha2() {
         return sha2;

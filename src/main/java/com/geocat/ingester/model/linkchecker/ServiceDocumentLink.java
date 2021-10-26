@@ -34,39 +34,37 @@
 package com.geocat.ingester.model.linkchecker;
 
 
+
 import com.geocat.ingester.model.linkchecker.helper.DocumentLink;
 import com.geocat.ingester.model.linkchecker.helper.PartialDownloadHint;
 import com.geocat.ingester.model.linkchecker.helper.ServiceMetadataRecord;
 
-import javax.persistence.CascadeType;
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.FetchType;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
-import javax.persistence.OneToOne;
-import javax.persistence.PrePersist;
-import javax.persistence.PreUpdate;
+import javax.persistence.*;
 
+//represents a link from a service metadata xml document
 @Entity
+@Table(
+        indexes = {
+                @Index(
+                        name = "servicemetadatarecord_servicemetadatadocumentid_index",
+                        columnList = "serviceMetadataRecord_serviceMetadataDocumentId",
+                        unique = false
+                )
+        }
+)
 public class ServiceDocumentLink extends DocumentLink {
 
-
+    //which service document did this link come from?
     @ManyToOne(fetch = FetchType.EAGER,cascade = {CascadeType.PERSIST,CascadeType.MERGE})
-//    @JoinColumn(name="serviceMetadataId")
     ServiceMetadataRecord serviceMetadataRecord;
+
+    //summary info (for display/debugging)
     @Column(columnDefinition = "text")
     String summary;
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long serviceMetadataLinkId;
-    @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
-    @JoinColumn(name = "capabilitiesDocumentId")
-    private CapabilitiesDocument capabilitiesDocument;
-
 
 
     //---------------------------------------------------------------------------
@@ -102,13 +100,6 @@ public class ServiceDocumentLink extends DocumentLink {
         this.serviceMetadataRecord = localServiceMetadataRecord;
     }
 
-    public CapabilitiesDocument getCapabilitiesDocument() {
-        return capabilitiesDocument;
-    }
-
-    public void setCapabilitiesDocument(CapabilitiesDocument capabilitiesDocument) {
-        this.capabilitiesDocument = capabilitiesDocument;
-    }
 
     //---------------------------------------------------------------------------
 
@@ -131,21 +122,10 @@ public class ServiceDocumentLink extends DocumentLink {
     public String toString() {
         String result = "ServiceDocumentLink {\n";
         result += "      serviceMetadataLinkId: " + serviceMetadataLinkId + "\n";
-
-
-//        if ( (serviceMetadataRecord != null)   )
-//            result += "      serviceMetadataRecord record identifier: "+ serviceMetadataRecord.getFileIdentifier()+"\n";
-//        if ( (serviceMetadataRecord != null)   )
-//            result += "      serviceMetadataRecord Id: "+ serviceMetadataRecord.getServiceMetadataDocumentId()+"\n";
+        result += "      serviceMetadataRecord Id: "+ serviceMetadataRecord.getServiceMetadataDocumentId()+"\n";
 
         result += "\n";
         result += super.toString();
-        result += "\n";
-        result += "     +  Link is Capabilities Document: " + (getCapabilitiesDocument() != null) + "\n";
-//        if (getCapabilitiesDocument() != null) {
-//            result += getCapabilitiesDocument().toString(8);
-//        }
-
         result += "\n";
 
         result += "  }";

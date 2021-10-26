@@ -31,10 +31,12 @@
  *  ==============================================================================
  */
 
-package com.geocat.ingester.dao.linkchecker;
+package com.geocat.ingester.model.linkchecker.helper;
 
-import com.geocat.ingester.model.linkchecker.RemoteServiceMetadataRecord;
-import org.springframework.data.repository.CrudRepository;
+public enum CapabilitiesType {
+    WMS, WMTS,
+    WFS, Atom,     // WCS, SOS,  -- not required
+    CSW
 
-public interface RemoteServiceMetadataRecordRepo extends CrudRepository<RemoteServiceMetadataRecord, Long> {
+
 }

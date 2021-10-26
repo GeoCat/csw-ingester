@@ -33,11 +33,11 @@
 
 package com.geocat.ingester.model.linkchecker.helper;
 
-// This is an class for JPA to use to return the number of records in a particular state
-// i.e. SELECT state, count(*) as numberOfRecords FROM ... GROUP BY state;
-public interface StatusQueryItem {
+public interface CapabilitiesLinkResult {
+    String getSha2();
 
-    ServiceMetadataDocumentState getState();
+    String getLinkcheckjobid();
 
-    Long getNumberOfRecords();
+    String getCapabilitiesdocumenttype();
+
 }

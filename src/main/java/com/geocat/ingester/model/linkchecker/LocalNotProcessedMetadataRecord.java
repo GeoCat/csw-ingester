@@ -36,18 +36,10 @@ package com.geocat.ingester.model.linkchecker;
 import com.geocat.ingester.model.linkchecker.helper.MetadataRecord;
 import com.geocat.ingester.model.linkchecker.helper.ServiceMetadataDocumentState;
 
-import javax.persistence.Column;
-import javax.persistence.DiscriminatorValue;
-import javax.persistence.Entity;
-import javax.persistence.EnumType;
-import javax.persistence.Enumerated;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.PrePersist;
-import javax.persistence.PreUpdate;
+import javax.persistence.*;
 
 
+// represents a harvested XML metadata document that we don't process
 @Entity
 @DiscriminatorValue("NoProcessedMetadataRecord")
 public class LocalNotProcessedMetadataRecord extends MetadataRecord {
@@ -56,15 +48,19 @@ public class LocalNotProcessedMetadataRecord extends MetadataRecord {
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
     private long localNotProcessedMetadataRecordId;
 
+    //processing state
     @Enumerated(EnumType.STRING)
     @Column(columnDefinition = "varchar(20)")
     ServiceMetadataDocumentState state;
 
+    //which job this is apart of
     @Column(columnDefinition = "varchar(40)")
     private String linkCheckJobId;
 
+    // from the harvester - what is the harvester's record ID for this document?
     private long harvesterMetadataRecordId;
 
+    // for display - info about this object
     @Column(columnDefinition = "text")
     private String summary;
 

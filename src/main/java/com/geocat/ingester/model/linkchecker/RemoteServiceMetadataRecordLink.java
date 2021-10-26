@@ -33,34 +33,38 @@
 
 package com.geocat.ingester.model.linkchecker;
 
+
+
 import com.geocat.ingester.model.linkchecker.helper.PartialDownloadHint;
 import com.geocat.ingester.model.linkchecker.helper.RetrievableSimpleLink;
 
-import javax.persistence.CascadeType;
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.FetchType;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.OneToOne;
-import javax.persistence.PrePersist;
-import javax.persistence.PreUpdate;
+import javax.persistence.*;
 
+//represents the link in the xml Capabilities document that refers to the Service metadata document
 @Entity
 public class RemoteServiceMetadataRecordLink extends RetrievableSimpleLink {
 
-    //    @OneToOne(cascade = CascadeType.ALL,fetch = FetchType.LAZY)
-//    @JoinColumn(name = "capabilitiesDocumentId" )
-    @OneToOne(mappedBy = "remoteServiceMetadataRecordLink")
-    CapabilitiesDocument capabilitiesDocument;
-    @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
-    @JoinColumn(name = "remoteServiceMetadataRecordId")
-    RemoteServiceMetadataRecord remoteServiceMetadataRecord;
+//    //which capabilities document did this link come from?
+//    @OneToOne(mappedBy = "remoteServiceMetadataRecordLink")
+//    CapabilitiesDocument capabilitiesDocument;
+
+    public String getFileIdentifier() {
+        return fileIdentifier;
+    }
+
+    public void setFileIdentifier(String fileIdentifier) {
+        this.fileIdentifier = fileIdentifier;
+    }
+
+    //fileIdentifier
+    @Column(columnDefinition = "text")
+    private String fileIdentifier;
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long remoteServiceMetadataRecordLinkId;
+
+    //summary info (for display/debugging)
     @Column(columnDefinition = "text")
     private String summary;
 
@@ -78,21 +82,7 @@ public class RemoteServiceMetadataRecordLink extends RetrievableSimpleLink {
         this.remoteServiceMetadataRecordLinkId = remoteServiceMetadataRecordId;
     }
 
-    public CapabilitiesDocument getCapabilitiesDocument() {
-        return capabilitiesDocument;
-    }
 
-    public void setCapabilitiesDocument(CapabilitiesDocument capabilitiesDocument) {
-        this.capabilitiesDocument = capabilitiesDocument;
-    }
-
-    public RemoteServiceMetadataRecord getRemoteServiceMetadataRecord() {
-        return remoteServiceMetadataRecord;
-    }
-
-    public void setRemoteServiceMetadataRecord(RemoteServiceMetadataRecord remoteServiceMetadataRecord) {
-        this.remoteServiceMetadataRecord = remoteServiceMetadataRecord;
-    }
     //---------------------------------------------------------------------------
 
     @PreUpdate
@@ -115,16 +105,18 @@ public class RemoteServiceMetadataRecordLink extends RetrievableSimpleLink {
         String result = "RemoteServiceMetadataRecordLink {\n";
         result += "      remoteServiceMetadataRecordLinkId: " + remoteServiceMetadataRecordLinkId + "\n";
 
+        result += "\n";
+        result += "      file identifier: "+fileIdentifier;
 
         result += "\n";
         result += super.toString();
         result += "\n";
 
 
-        result += "      has remote Service Metadata Record :" + (remoteServiceMetadataRecord != null) + "\n";
-        if (remoteServiceMetadataRecord != null) {
-            result += "      Remote Service Metadata Record file identifier:" + remoteServiceMetadataRecord.getFileIdentifier() + "\n";
-        }
+//        result += "      has remote Service Metadata Record :" + (remoteServiceMetadataRecord != null) + "\n";
+//        if (remoteServiceMetadataRecord != null) {
+//            result += "      Remote Service Metadata Record file identifier:" + remoteServiceMetadataRecord.getFileIdentifier() + "\n";
+//        }
         result += "  }";
         return result;
     }

@@ -37,35 +37,41 @@ import com.geocat.ingester.model.linkchecker.helper.PartialDownloadHint;
 import com.geocat.ingester.model.linkchecker.helper.RetrievableSimpleLink;
 import com.geocat.ingester.model.linkchecker.helper.ServiceMetadataRecord;
 
-import javax.persistence.CascadeType;
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.FetchType;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
-import javax.persistence.OneToOne;
-import javax.persistence.PrePersist;
-import javax.persistence.PreUpdate;
+import javax.persistence.*;
 
+
+//represents an OperatesOn Link inside a Service Metadata Document
 @Entity
 public class OperatesOnLink extends RetrievableSimpleLink {
 
+    // from the Service document Operates on section
     @Column(columnDefinition = "text")
     String uuidref;
+
+    @Column(columnDefinition = "text")
+    String fileIdentifier;
+
+    @Column(columnDefinition = "text")
+    String datasetIdentifier;
+
+
+    // summary of this object (for display)
     @Column(columnDefinition = "text")
     String summary;
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long operatesOnLinkId;
+
+    //which service metadata record does this link belong to?
     @ManyToOne(fetch = FetchType.EAGER)
-    //@JoinColumn(name="serviceMetadataId")
     private ServiceMetadataRecord serviceMetadataRecord;
-    @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
-    @JoinColumn(name = "datasetMetadataRecordId")
-    private OperatesOnRemoteDatasetMetadataRecord datasetMetadataRecord;
+
+//    //if this link resolves to a dataset record, this represents that dataset document
+//    @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+//    @JoinColumn(name = "datasetMetadataRecordId")
+//    @Fetch(value = FetchMode.SELECT)
+//    private OperatesOnRemoteDatasetMetadataRecord datasetMetadataRecord;
 
 
     public OperatesOnLink() {
@@ -74,6 +80,22 @@ public class OperatesOnLink extends RetrievableSimpleLink {
 
 
     //---------------------------------------------------------------------------
+
+    public String getFileIdentifier() {
+        return fileIdentifier;
+    }
+
+    public void setFileIdentifier(String fileIdentifier) {
+        this.fileIdentifier = fileIdentifier;
+    }
+
+    public String getDatasetIdentifier() {
+        return datasetIdentifier;
+    }
+
+    public void setDatasetIdentifier(String datasetIdentifier) {
+        this.datasetIdentifier = datasetIdentifier;
+    }
 
     public ServiceMetadataRecord getServiceMetadataRecord() {
         return serviceMetadataRecord;
@@ -100,13 +122,6 @@ public class OperatesOnLink extends RetrievableSimpleLink {
     }
 
 
-    public OperatesOnRemoteDatasetMetadataRecord getDatasetMetadataRecord() {
-        return datasetMetadataRecord;
-    }
-
-    public void setDatasetMetadataRecord(OperatesOnRemoteDatasetMetadataRecord datasetMetadataRecord) {
-        this.datasetMetadataRecord = datasetMetadataRecord;
-    }
 
 //---------------------------------------------------------------------------
 
@@ -132,13 +147,15 @@ public class OperatesOnLink extends RetrievableSimpleLink {
         if ((uuidref != null) && (!uuidref.isEmpty()))
             result += "      uuidref: " + uuidref + "\n";
 
+        result += "      file Identifier: " + fileIdentifier + "\n";
+        result += "      dataset identifier: " + datasetIdentifier + "\n";
 
         result += super.toString();
-        result += "      has dataset Metadata Record :" + (datasetMetadataRecord != null) + "\n";
-        if (datasetMetadataRecord != null) {
-            result += "      dataset Metadata Record file identifier: " + datasetMetadataRecord.getFileIdentifier() + "\n";
-            result += "      dataset Metadata Record dataset identifier: " + datasetMetadataRecord.getDatasetIdentifier() + "\n";
-        }
+       // result += "      has dataset Metadata Record :" + (datasetMetadataRecord != null) + "\n";
+//        if (datasetMetadataRecord != null) {
+//            result += "      dataset Metadata Record file identifier: " + datasetMetadataRecord.getFileIdentifier() + "\n";
+//            result += "      dataset Metadata Record dataset identifier: " + datasetMetadataRecord.getDatasetIdentifier() + "\n";
+//        }
 //        if ( (serviceMetadataRecord != null)   )
 //            result += "      serviceMetadataRecord record identifier: "+ serviceMetadataRecord.getFileIdentifier()+"\n";
 //        if ( (localServiceMetadataRecord != null)   )

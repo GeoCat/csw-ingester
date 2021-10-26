@@ -33,39 +33,44 @@
 
 package com.geocat.ingester.model.linkchecker;
 
+
 import com.geocat.ingester.model.linkchecker.helper.DatasetMetadataRecord;
 import com.geocat.ingester.model.linkchecker.helper.DocumentLink;
 import com.geocat.ingester.model.linkchecker.helper.PartialDownloadHint;
 
-import javax.persistence.CascadeType;
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.FetchType;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
-import javax.persistence.OneToOne;
-import javax.persistence.PrePersist;
-import javax.persistence.PreUpdate;
+import javax.persistence.*;
 
 
+//links from a dataset metadata document
 @Entity
+@Table(
+        indexes = {
+                @Index(
+                        name = "datasetmetadatarecord_datasetmetadatadocumentid_index",
+                        columnList = "datasetMetadataRecord_datasetMetadataDocumentId",
+                        unique = false
+                )
+        }
+)
 public class DatasetDocumentLink extends DocumentLink {
 
-
+    //which dataset metadata document did this link come from?
     @ManyToOne(fetch = FetchType.EAGER,cascade = {CascadeType.PERSIST,CascadeType.MERGE})
-//    @JoinColumn(name="serviceMetadataId")
     DatasetMetadataRecord datasetMetadataRecord;
+
+    //for display - info about this link
     @Column(columnDefinition = "text")
     String summary;
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long datasetMetadataLinkId;
-    @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
-    @JoinColumn(name = "capabilitiesDocumentId")
-    private CapabilitiesDocument capabilitiesDocument;
+
+//    //if this link resolved to a capabilities document, which one
+//    @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+//    @JoinColumn(name = "capabilitiesDocumentId")
+//    @Fetch(value = FetchMode.SELECT)
+//    private CapabilitiesDocument capabilitiesDocument;
 
 
 
@@ -96,13 +101,6 @@ public class DatasetDocumentLink extends DocumentLink {
         this.datasetMetadataLinkId = datasetMetadataLinkId;
     }
 
-    public CapabilitiesDocument getCapabilitiesDocument() {
-        return capabilitiesDocument;
-    }
-
-    public void setCapabilitiesDocument(CapabilitiesDocument capabilitiesDocument) {
-        this.capabilitiesDocument = capabilitiesDocument;
-    }
 
     //---------------------------------------------------------------------------
 

@@ -36,92 +36,85 @@ package com.geocat.ingester.model.linkchecker;
 import com.geocat.ingester.model.linkchecker.helper.DatasetMetadataRecord;
 import com.geocat.ingester.model.linkchecker.helper.ServiceMetadataDocumentState;
 
-import javax.persistence.Column;
-import javax.persistence.DiscriminatorValue;
-import javax.persistence.Entity;
-import javax.persistence.EnumType;
-import javax.persistence.Enumerated;
-import javax.persistence.PrePersist;
-import javax.persistence.PreUpdate;
+import javax.persistence.*;
 
+//represents a harvested (local) Dataset document
 @Entity
 @DiscriminatorValue("LocalDatasetMetadataRecord")
 public class LocalDatasetMetadataRecord extends DatasetMetadataRecord {
 
-    @Enumerated(EnumType.STRING)
-    @Column(columnDefinition = "varchar(20)")
-    ServiceMetadataDocumentState state;
-
-    @Column(columnDefinition = "varchar(40)")
-    private String linkCheckJobId;
-
-    private long harvesterMetadataRecordId;
-
-    @Column(columnDefinition = "text")
-    private String summary;
-
-    public LocalDatasetMetadataRecord() {
-        super();
-    }
+   //processing state of the document
+   @Enumerated(EnumType.STRING)
+   @Column(columnDefinition = "varchar(20)")
+   ServiceMetadataDocumentState state;
 
 
-    public String getLinkCheckJobId() {
-        return linkCheckJobId;
-    }
 
-    public void setLinkCheckJobId(String linkCheckJobId) {
-        this.linkCheckJobId = linkCheckJobId;
-    }
+   // from the harvester - what is the harvester's record ID for this document?
+   private long harvesterMetadataRecordId;
 
 
-    public long getHarvesterMetadataRecordId() {
-        return harvesterMetadataRecordId;
-    }
-
-    public void setHarvesterMetadataRecordId(long harvesterMetadataRecordId) {
-        this.harvesterMetadataRecordId = harvesterMetadataRecordId;
-    }
+   // for display - info about this object
+   @Column(columnDefinition = "text")
+   private String summary;
 
 
-    public ServiceMetadataDocumentState getState() {
-        return state;
-    }
 
-    public void setState(ServiceMetadataDocumentState state) {
-        this.state = state;
-    }
+   //--------
 
-
-    //---------------------------------------------------------------------------
-
-    @PreUpdate
-    protected void onUpdate() {
-        summary = toString();
-        super.onUpdate();
-    }
-
-    @PrePersist
-    protected void onInsert() {
-        summary = toString();
-        super.onInsert();
-    }
-
-    //---------------------------------------------------------------------------
-
-    @Override
-    public String toString() {
-        String result = "LocalDatasetMetadataRecord {\n";
-        result += "      Dataset Metadata Document Id: " + getDatasetMetadataDocumentId() + "\n";
-        result += "     linkCheckJobId: " + linkCheckJobId + "\n";
-        result += "     harvesterMetadataRecordId: " + harvesterMetadataRecordId + "\n";
-        result += "     state: " + state + "\n";
+   public LocalDatasetMetadataRecord() {
+       super();
+   }
 
 
-        result += super.toString();
+   public long getHarvesterMetadataRecordId() {
+       return harvesterMetadataRecordId;
+   }
 
-        result += "\n";
+   public void setHarvesterMetadataRecordId(long harvesterMetadataRecordId) {
+       this.harvesterMetadataRecordId = harvesterMetadataRecordId;
+   }
 
-        result += " }";
-        return result;
-    }
+
+   public ServiceMetadataDocumentState getState() {
+       return state;
+   }
+
+   public void setState(ServiceMetadataDocumentState state) {
+       this.state = state;
+   }
+
+
+   //---------------------------------------------------------------------------
+
+   @PreUpdate
+   protected void onUpdate() {
+       summary = toString();
+       super.onUpdate();
+   }
+
+   @PrePersist
+   protected void onInsert() {
+       summary = toString();
+       super.onInsert();
+   }
+
+   //---------------------------------------------------------------------------
+
+   @Override
+   public String toString() {
+       String result = "LocalDatasetMetadataRecord {\n";
+       result += "      Dataset Metadata Document Id: " + getDatasetMetadataDocumentId() + "\n";
+       result += "     linkCheckJobId: " + getLinkCheckJobId() + "\n";
+       result += "     harvesterMetadataRecordId: " + harvesterMetadataRecordId + "\n";
+       result += "     state: " + state + "\n";
+
+
+       result += super.toString();
+
+       result += "\n";
+
+       result += " }";
+       return result;
+   }
 }

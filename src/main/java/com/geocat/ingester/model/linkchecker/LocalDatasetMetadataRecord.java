@@ -39,6 +39,12 @@ import com.geocat.ingester.model.linkchecker.helper.ServiceMetadataDocumentState
 import javax.persistence.*;
 
 //represents a harvested (local) Dataset document
+@NamedEntityGraph(
+        name = "LocalDatasetMetadataRecord-lazy-graph",
+        attributeNodes = {
+                //none - don't load sub-objects (operatesOn and documentLinks)
+        }
+)
 @Entity
 @DiscriminatorValue("LocalDatasetMetadataRecord")
 public class LocalDatasetMetadataRecord extends DatasetMetadataRecord {

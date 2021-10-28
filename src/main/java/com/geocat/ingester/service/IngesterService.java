@@ -3,9 +3,7 @@ package com.geocat.ingester.service;
 import com.geocat.ingester.dao.harvester.EndpointJobRepo;
 import com.geocat.ingester.dao.harvester.HarvestJobRepo;
 import com.geocat.ingester.dao.harvester.MetadataRecordRepo;
-import com.geocat.ingester.dao.linkchecker.LinkCheckJobRepo;
-import com.geocat.ingester.dao.linkchecker.LocalDatasetMetadataRecordRepo;
-import com.geocat.ingester.dao.linkchecker.LocalServiceMetadataRecordRepo;
+import com.geocat.ingester.dao.linkchecker.*;
 import com.geocat.ingester.exception.GeoNetworkClientException;
 import com.geocat.ingester.geonetwork.client.GeoNetworkClient;
 import com.geocat.ingester.model.harvester.EndpointJob;
@@ -63,11 +61,18 @@ public class IngesterService {
     @Autowired
     private LinkCheckJobRepo linkCheckJobRepo;
 
-    @Autowired
-    private LocalServiceMetadataRecordRepo localServiceMetadataRecordRepo;
+//    @Autowired
+//   Autowired private LocalServiceMetadataRecordRepo localServiceMetadataRecordRepo;
+
+//    @Autowired
+//    private LocalDatasetMetadataRecordRepo localDatasetMetadataRecordRepo;
 
     @Autowired
-    private LocalDatasetMetadataRecordRepo localDatasetMetadataRecordRepo;
+    LazyLocalServiceMetadataRecordRepo lazyLocalServiceMetadataRecordRepo;
+
+    @Autowired
+    LazyLocalDatsetMetadataRecordRepo lazyLocalDatsetMetadataRecordRepo;
+
 
     /**
      * Executes the ingester process.
@@ -269,26 +274,29 @@ public class IngesterService {
      * @param linkCheckJobId
      */
     private void fillMetadataIndicators(MetadataRecordXml metadata, String linkCheckJobId) {
-        List<LocalServiceMetadataRecord> localServiceMetadataRecord = localServiceMetadataRecordRepo.findAllByFileIdentifierAndLinkCheckJobId(metadata.getRecordIdentifier(), linkCheckJobId);
+       // List<LocalServiceMetadataRecord> localServiceMetadataRecord = localServiceMetadataRecordRepo.findAllByFileIdentifierAndLinkCheckJobId(metadata.getRecordIdentifier(), linkCheckJobId);
+        Optional<LocalServiceMetadataRecord> localServiceMetadataRecord = lazyLocalServiceMetadataRecordRepo.searchFirstByFileIdentifierAndLinkCheckJobId(metadata.getRecordIdentifier(), linkCheckJobId);
 
-        if (!localServiceMetadataRecord.isEmpty()) {
-            addIndicator(metadata, "INDICATOR_ALL_CAPABILITIES_LAYER_RESOLVE", localServiceMetadataRecord.get(0).getINDICATOR_ALL_CAPABILITIES_LAYER_RESOLVE());
-            addIndicator(metadata, "INDICATOR_ALL_OPERATES_ON_RESOLVE", localServiceMetadataRecord.get(0).getINDICATOR_ALL_OPERATES_ON_RESOLVE());
-            addIndicator(metadata, "INDICATOR_ALL_OPERATES_ON_MATCH_CAPABILITIES", localServiceMetadataRecord.get(0).getINDICATOR_ALL_OPERATES_ON_MATCH_CAPABILITIES());
-            addIndicator(metadata, "INDICATOR_CAPABILITIES_TYPE", localServiceMetadataRecord.get(0).getINDICATOR_CAPABILITIES_TYPE());
-            addIndicator(metadata, "INDICATOR_CAPABILITIES_RESOLVES_TO_SERVICE", localServiceMetadataRecord.get(0).getINDICATOR_CAPABILITIES_RESOLVES_TO_SERVICE());
-            addIndicator(metadata, "INDICATOR_CAPABILITIES_SERVICE_FILE_ID_MATCHES", localServiceMetadataRecord.get(0).getINDICATOR_CAPABILITIES_SERVICE_FILE_ID_MATCHES());
+
+        if (localServiceMetadataRecord.isPresent()) {
+            addIndicator(metadata, "INDICATOR_ALL_CAPABILITIES_LAYER_RESOLVE", localServiceMetadataRecord.get().getINDICATOR_ALL_CAPABILITIES_LAYER_RESOLVE());
+            addIndicator(metadata, "INDICATOR_ALL_OPERATES_ON_RESOLVE", localServiceMetadataRecord.get().getINDICATOR_ALL_OPERATES_ON_RESOLVE());
+            addIndicator(metadata, "INDICATOR_ALL_OPERATES_ON_MATCH_CAPABILITIES", localServiceMetadataRecord.get().getINDICATOR_ALL_OPERATES_ON_MATCH_CAPABILITIES());
+            addIndicator(metadata, "INDICATOR_CAPABILITIES_TYPE", localServiceMetadataRecord.get().getINDICATOR_CAPABILITIES_TYPE());
+            addIndicator(metadata, "INDICATOR_CAPABILITIES_RESOLVES_TO_SERVICE", localServiceMetadataRecord.get().getINDICATOR_CAPABILITIES_RESOLVES_TO_SERVICE());
+            addIndicator(metadata, "INDICATOR_CAPABILITIES_SERVICE_FILE_ID_MATCHES", localServiceMetadataRecord.get().getINDICATOR_CAPABILITIES_SERVICE_FILE_ID_MATCHES());
            // addIndicator(metadata, "INDICATOR_CAPABILITIES_SERVICE_FULLY_MATCHES", localServiceMetadataRecord.get(0).getINDICATOR_CAPABILITIES_SERVICE_FULLY_MATCHES());
-            addIndicator(metadata, "INDICATOR_RESOLVES_TO_CAPABILITIES", localServiceMetadataRecord.get(0).getINDICATOR_RESOLVES_TO_CAPABILITIES());
+            addIndicator(metadata, "INDICATOR_RESOLVES_TO_CAPABILITIES", localServiceMetadataRecord.get().getINDICATOR_RESOLVES_TO_CAPABILITIES());
         } else {
-            List<LocalDatasetMetadataRecord> localDatasetMetadataRecord = localDatasetMetadataRecordRepo.findAllByFileIdentifierAndLinkCheckJobId(metadata.getRecordIdentifier(), linkCheckJobId);
+           // List<LocalDatasetMetadataRecord> localDatasetMetadataRecord = localDatasetMetadataRecordRepo.findAllByFileIdentifierAndLinkCheckJobId(metadata.getRecordIdentifier(), linkCheckJobId);
+            Optional<LocalDatasetMetadataRecord> localDatasetMetadataRecord = lazyLocalDatsetMetadataRecordRepo.searchFirstByFileIdentifierAndLinkCheckJobId(metadata.getRecordIdentifier(), linkCheckJobId);
 
-            if (!localDatasetMetadataRecord.isEmpty()) {
-                addIndicator(metadata, "INDICATOR_CAPABILITIES_TYPE", localDatasetMetadataRecord.get(0).getINDICATOR_CAPABILITIES_TYPE());
-                addIndicator(metadata, "INDICATOR_LAYER_MATCHES", localDatasetMetadataRecord.get(0).getINDICATOR_LAYER_MATCHES());
-                addIndicator(metadata, "INDICATOR_RESOLVES_TO_CAPABILITIES", localDatasetMetadataRecord.get(0).getINDICATOR_RESOLVES_TO_CAPABILITIES());
-                addIndicator(metadata, "INDICATOR_LAYER_MATCHES_VIEW", localDatasetMetadataRecord.get(0).getINDICATOR_LAYER_MATCHES_VIEW());
-                addIndicator(metadata, "INDICATOR_LAYER_MATCHES_DOWNLOAD", localDatasetMetadataRecord.get(0).getINDICATOR_LAYER_MATCHES_DOWNLOAD());
+            if (localDatasetMetadataRecord.isPresent()) {
+                addIndicator(metadata, "INDICATOR_CAPABILITIES_TYPE", localDatasetMetadataRecord.get().getINDICATOR_CAPABILITIES_TYPE());
+                addIndicator(metadata, "INDICATOR_LAYER_MATCHES", localDatasetMetadataRecord.get().getINDICATOR_LAYER_MATCHES());
+                addIndicator(metadata, "INDICATOR_RESOLVES_TO_CAPABILITIES", localDatasetMetadataRecord.get().getINDICATOR_RESOLVES_TO_CAPABILITIES());
+                addIndicator(metadata, "INDICATOR_LAYER_MATCHES_VIEW", localDatasetMetadataRecord.get().getINDICATOR_LAYER_MATCHES_VIEW());
+                addIndicator(metadata, "INDICATOR_LAYER_MATCHES_DOWNLOAD", localDatasetMetadataRecord.get().getINDICATOR_LAYER_MATCHES_DOWNLOAD());
             }
 
         }

@@ -47,6 +47,8 @@ import java.util.List;
 @Scope("prototype")
 public interface LocalServiceMetadataRecordRepo extends CrudRepository<LocalServiceMetadataRecord, Long> {
 
+
+
     List<LocalServiceMetadataRecord> findAllByFileIdentifierAndLinkCheckJobId(String fileIdentifier, String linkCheckJobId);
 
     LocalServiceMetadataRecord findFirstByLinkCheckJobIdAndSha2(String linkCheckJobId, String sha2);

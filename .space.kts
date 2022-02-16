@@ -4,7 +4,7 @@
 * For more info, see https://www.jetbrains.com/help/space/automation.html
 */
 
-job("Build, test and install project artifacts") {
+job("Build, test and install CSW-ingester artifacts") {
     
     container(displayName = "Run mvn install", image = "maven:3-jdk-8") {
         // url of a Space Packages repository
@@ -50,7 +50,10 @@ job("Build, test and install project artifacts") {
     }
     
 
-    container("Push Docker image in GeoCat Docker repository", "geocat.registry.jetbrains.space/p/sys-maint/docker/crane:main") {
+    container(
+        displayName="Push Docker image in GeoCat Docker repository", 
+        image="geocat.registry.jetbrains.space/p/sys-maint/docker/crane:main"
+    ) {
         env["GEOCAT_DOCKER_REGISTRY_URL"] = "docker-registry.geocat.net:5000"
         env["GEOCAT_DOCKER_REGISTRY_USER"] = Params("geocat_docker_registry_user")
         env["GEOCAT_DOCKER_REGISTRY_PASSWORD"] = Secrets("geocat_docker_registry_password")

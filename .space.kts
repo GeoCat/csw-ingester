@@ -39,7 +39,7 @@ job("Build, test and install CSW-ingester artifacts") {
         }
         build {
             context = "."
-            file = "./Dockerfile"
+            file = "./DockerfileSpace"
             labels["vendor"] = "GeoCat B.V."
         }
 

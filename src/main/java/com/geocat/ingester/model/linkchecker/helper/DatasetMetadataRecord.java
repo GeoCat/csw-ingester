@@ -121,6 +121,14 @@ public class DatasetMetadataRecord extends MetadataRecord {
     @Column(columnDefinition = "varchar(5)")
     IndicatorStatus INDICATOR_SERVICE_MATCHES_VIEW;
 
+    @Enumerated(EnumType.STRING)
+    @Column(columnDefinition = "varchar(5)")
+    IndicatorStatus INDICATOR_VIEW_LINK_TO_DATA;
+
+    @Enumerated(EnumType.STRING)
+    @Column(columnDefinition = "varchar(5)")
+    IndicatorStatus INDICATOR_DOWNLOAD_LINK_TO_DATA;
+
 
     //---------------------------------------------------------------------------
 
@@ -225,6 +233,21 @@ public class DatasetMetadataRecord extends MetadataRecord {
         this.datasetIdentifier = datasetIdentifier;
     }
 
+    public IndicatorStatus getINDICATOR_VIEW_LINK_TO_DATA() {
+        return INDICATOR_VIEW_LINK_TO_DATA;
+    }
+
+    public void setINDICATOR_VIEW_LINK_TO_DATA(IndicatorStatus INDICATOR_VIEW_LINK_TO_DATA) {
+        this.INDICATOR_VIEW_LINK_TO_DATA = INDICATOR_VIEW_LINK_TO_DATA;
+    }
+
+    public IndicatorStatus getINDICATOR_DOWNLOAD_LINK_TO_DATA() {
+        return INDICATOR_DOWNLOAD_LINK_TO_DATA;
+    }
+
+    public void setINDICATOR_DOWNLOAD_LINK_TO_DATA(IndicatorStatus INDICATOR_DOWNLOAD_LINK_TO_DATA) {
+        this.INDICATOR_DOWNLOAD_LINK_TO_DATA = INDICATOR_DOWNLOAD_LINK_TO_DATA;
+    }
 
     //---------------------------------------------------------------------------
 

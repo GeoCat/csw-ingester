@@ -61,7 +61,7 @@ mvn package
 
 ## Companion services
 
-The folder `aux` contains a `docker-compose.yml` with the required software for running the JRC Ingester:
+The folder `extra` contains a `docker-compose.yml` with the required software for running the JRC Ingester:
 * Elasticsearch exposing the port `9200` (http://localhost:9200/).
 * Kibana exposing the port `5601` (http://localhost:5601/)
 * PostgreSQL 13 listiening at port `5432` of localhost. Credentials are `postgres` / `postgres`. These databases are 
@@ -77,7 +77,7 @@ Data is persisted between runs for GN, Postgresql, Elasticsearch and Activemq.
 
 To use these services go to the folder `aux` where the `docker-compose.yml` is and run:
 ```shell
-cd aux
+cd extra
 docker-compose up -d
 ```
 

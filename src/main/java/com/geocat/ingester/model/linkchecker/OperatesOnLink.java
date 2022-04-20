@@ -33,15 +33,34 @@
 
 package com.geocat.ingester.model.linkchecker;
 
-import com.geocat.ingester.model.linkchecker.helper.PartialDownloadHint;
-import com.geocat.ingester.model.linkchecker.helper.RetrievableSimpleLink;
-import com.geocat.ingester.model.linkchecker.helper.ServiceMetadataRecord;
+import com.geocat.ingester.model.linkchecker.helper.*;
+import org.hibernate.annotations.Fetch;
+import org.hibernate.annotations.FetchMode;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 
 import javax.persistence.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
 
 
 //represents an OperatesOn Link inside a Service Metadata Document
 @Entity
+@Table(
+        indexes = {
+                @Index(
+                        name = "RSL_serviceMetadataRecord_serviceMetadataDocumentId",
+                        columnList = "serviceMetadataRecord_serviceMetadataDocumentId",
+                        unique = false
+                ),
+                @Index(
+                        name = "Opon_linkcheckjob_fileid",
+                        columnList = "linkCheckJobId,fileIdentifier",
+                        unique = false
+                )
+        }
+)
 public class OperatesOnLink extends RetrievableSimpleLink {
 
     // from the Service document Operates on section
@@ -51,8 +70,11 @@ public class OperatesOnLink extends RetrievableSimpleLink {
     @Column(columnDefinition = "text")
     String fileIdentifier;
 
-    @Column(columnDefinition = "text")
-    String datasetIdentifier;
+    @OneToMany(mappedBy = "operatesOnLink",
+            cascade = {CascadeType.ALL}, fetch = FetchType.EAGER)
+    @Fetch(value = FetchMode.JOIN)
+    @OnDelete(action = OnDeleteAction.CASCADE)
+    List<OperatesOnLinkDatasetIdentifier> datasetIdentifiers;
 
 
     // summary of this object (for display)
@@ -60,7 +82,7 @@ public class OperatesOnLink extends RetrievableSimpleLink {
     String summary;
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE)
     private long operatesOnLinkId;
 
     //which service metadata record does this link belong to?
@@ -76,6 +98,7 @@ public class OperatesOnLink extends RetrievableSimpleLink {
 
     public OperatesOnLink() {
         this.setPartialDownloadHint(PartialDownloadHint.METADATA_ONLY);
+        datasetIdentifiers = new ArrayList<>();
     }
 
 
@@ -89,12 +112,13 @@ public class OperatesOnLink extends RetrievableSimpleLink {
         this.fileIdentifier = fileIdentifier;
     }
 
-    public String getDatasetIdentifier() {
-        return datasetIdentifier;
+    public List<OperatesOnLinkDatasetIdentifier> getDatasetIdentifiers() {
+        return datasetIdentifiers;
     }
 
-    public void setDatasetIdentifier(String datasetIdentifier) {
-        this.datasetIdentifier = datasetIdentifier;
+    public void setDatasetIdentifiers(List<DatasetIdentifier> datasetIdentifiers) {
+        this.datasetIdentifiers = datasetIdentifiers.stream().map(x->new OperatesOnLinkDatasetIdentifier(x,this)).collect(Collectors.toList());
+        // this.datasetIdentifiers = datasetIdentifiers;
     }
 
     public ServiceMetadataRecord getServiceMetadataRecord() {
@@ -148,10 +172,10 @@ public class OperatesOnLink extends RetrievableSimpleLink {
             result += "      uuidref: " + uuidref + "\n";
 
         result += "      file Identifier: " + fileIdentifier + "\n";
-        result += "      dataset identifier: " + datasetIdentifier + "\n";
+        //  result += "      dataset identifier: " + datasetIdentifier + "\n";
 
         result += super.toString();
-       // result += "      has dataset Metadata Record :" + (datasetMetadataRecord != null) + "\n";
+        // result += "      has dataset Metadata Record :" + (datasetMetadataRecord != null) + "\n";
 //        if (datasetMetadataRecord != null) {
 //            result += "      dataset Metadata Record file identifier: " + datasetMetadataRecord.getFileIdentifier() + "\n";
 //            result += "      dataset Metadata Record dataset identifier: " + datasetMetadataRecord.getDatasetIdentifier() + "\n";

@@ -37,6 +37,8 @@ package com.geocat.ingester.model.linkchecker;
 import com.geocat.ingester.model.linkchecker.helper.*;
 import org.hibernate.annotations.Fetch;
 import org.hibernate.annotations.FetchMode;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 
 import javax.persistence.*;
 import java.util.ArrayList;
@@ -79,6 +81,7 @@ public class CapabilitiesDocument extends UpdateCreateDateTimeEntity {
     //link to the service metadata referenced in the XML's ExtendedCapabilities
     @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.EAGER )
     @JoinColumn(name = "remoteServiceMetadataRecordLinkId")
+    @OnDelete(action = OnDeleteAction.CASCADE)
     private RemoteServiceMetadataRecordLink remoteServiceMetadataRecordLink;
 
 
@@ -92,25 +95,69 @@ public class CapabilitiesDocument extends UpdateCreateDateTimeEntity {
                     @JoinColumn(name="cap_jobId",referencedColumnName = "linkcheckjobid")
             }
     )
-    private List< CapabilitiesDatasetMetadataLink> capabilitiesDatasetMetadataLinkList;
+    private List<CapabilitiesDatasetMetadataLink> capabilitiesDatasetMetadataLinkList;
+
+
+    @OneToMany(
+            cascade = {CascadeType.ALL}, fetch = FetchType.EAGER)
+    @Fetch(value = FetchMode.SUBSELECT)
+    @JoinColumns(
+            {
+                    @JoinColumn(name="cap_sha2",referencedColumnName = "sha2"),
+                    @JoinColumn(name="cap_jobId",referencedColumnName = "linkcheckjobid")
+            }
+    )
+    private List<InspireSpatialDatasetIdentifier> inspireSpatialDatasetIdentifiers;
+
 
 
     //number of layers (CapabilitiesDatasetMetadataLink) in this document -- saved for easy access
     // i.e. capabilitiesDatasetMetadataLinkList.size()
     private Integer numberOfDatasetLinks;
 
+
+    @Column(columnDefinition = "text")
+    private String procGetSpatialDataSetName;
+
+
     // summary for display
     @Column(columnDefinition = "text")
     private String summary;
 
 
+
     public CapabilitiesDocument(){
         this.capabilitiesDatasetMetadataLinkList = new ArrayList<>();
         this.state = CapabilitiesDocumentState.CREATED;
+        this.inspireSpatialDatasetIdentifiers = new ArrayList<>();
     }
 
     //---------------------------------------------------------------------------
 
+
+    public String getProcGetSpatialDataSetName() {
+        return procGetSpatialDataSetName;
+    }
+
+    public void setProcGetSpatialDataSetName(String procGetSpatialDataSetName) {
+        this.procGetSpatialDataSetName = procGetSpatialDataSetName;
+    }
+
+    public Integer getNumberOfDatasetLinks() {
+        return numberOfDatasetLinks;
+    }
+
+    public void setNumberOfDatasetLinks(Integer numberOfDatasetLinks) {
+        this.numberOfDatasetLinks = numberOfDatasetLinks;
+    }
+
+    public List<InspireSpatialDatasetIdentifier> getInspireSpatialDatasetIdentifiers() {
+        return inspireSpatialDatasetIdentifiers;
+    }
+
+    public void setInspireSpatialDatasetIdentifiers(List<InspireSpatialDatasetIdentifier> inspireSpatialDatasetIdentifiers) {
+        this.inspireSpatialDatasetIdentifiers = inspireSpatialDatasetIdentifiers;
+    }
 
     public CapabilitiesDocumentState getState() {
         return state;
@@ -204,7 +251,7 @@ public class CapabilitiesDocument extends UpdateCreateDateTimeEntity {
     public String toString(int indentSpaces) {
         String indent = "                                                     ".substring(0, indentSpaces);
         String result = indent + "CapabilitiesDocument {\n";
-       // result += indent + "      capabilitiesDocumentId: " + capabilitiesDocumentId + "\n";
+        // result += indent + "      capabilitiesDocumentId: " + capabilitiesDocumentId + "\n";
 
         result+= super.toString();
 
@@ -226,6 +273,10 @@ public class CapabilitiesDocument extends UpdateCreateDateTimeEntity {
             result += indent + "      has Remote Service Metadata link: true\n";
             result += indent + "      Remote Service Metadata URL: " + remoteServiceMetadataRecordLink.getRawURL() + "\n";
         }
+
+        result += indent + "      procGetSpatialDataSetName: "+procGetSpatialDataSetName+"\n";
+        result += indent + "      numberOfDatasetLinks: "+numberOfDatasetLinks+"\n";
+
 
         result += indent + "  }";
         return result;

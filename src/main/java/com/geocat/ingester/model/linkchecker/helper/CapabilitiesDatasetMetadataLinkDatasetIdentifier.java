@@ -33,73 +33,37 @@
 
 package com.geocat.ingester.model.linkchecker.helper;
 
+import com.geocat.ingester.model.linkchecker.CapabilitiesDatasetMetadataLink;
 
 import javax.persistence.*;
-//taken from;
-// https://raw.githubusercontent.com/qos-ch/logback/master/logback-classic/src/main/resources/ch/qos/logback/classic/db/script/postgresql.sql
+
 
 @Entity
-@Table(name = "logging_event_exception"
-        ,
-        indexes= {
-                @Index(
-                        name="log_ex_eventid",
-                        columnList="event_id",
-                        unique=false
-                )
-        }
-)
-@IdClass(LogbackLoggingEventExceptionCompositeKey.class)
-public class LogbackLoggingEventException {
+@DiscriminatorValue("CapDSMDLinkDatasetIdentifier")
+public class CapabilitiesDatasetMetadataLinkDatasetIdentifier extends DatasetIdentifier {
 
-    @Column(name = "event_id", columnDefinition = "bigint")
-    @Id
-    private long eventId;
+    @ManyToOne(fetch = FetchType.EAGER,cascade = {CascadeType.PERSIST,CascadeType.MERGE})
+    CapabilitiesDatasetMetadataLink capDatasetMetadataLink;
 
-    @Column(name="i", columnDefinition = "smallint")
-    @Id
-    private short i;
+    public CapabilitiesDatasetMetadataLinkDatasetIdentifier() {super();}
 
-    @Column(name = "trace_line", columnDefinition = "text")
-    private String traceLine;
-
-    @Column(name = "caused_by_depth",columnDefinition = "smallint")
-    private short causedByDepth;
-
-
-
-    //----------------------
-
-
-    public short getCausedByDepth() {
-        return causedByDepth;
+    public CapabilitiesDatasetMetadataLinkDatasetIdentifier(DatasetIdentifierNodeType identifierNodeType, String code, String codeSpace) {
+        super(identifierNodeType,code,codeSpace);
     }
 
-    public void setCausedByDepth(short causedByDepth) {
-        this.causedByDepth = causedByDepth;
+    public CapabilitiesDatasetMetadataLinkDatasetIdentifier(DatasetIdentifier id) {
+        super(id.getIdentifierNodeType(),id.getCode(),id.getCodeSpace());
+    }
+    public CapabilitiesDatasetMetadataLinkDatasetIdentifier(DatasetIdentifier id, CapabilitiesDatasetMetadataLink r ) {
+        this(id);
+        this.capDatasetMetadataLink = r;
     }
 
-    public long getEventId() {
-        return eventId;
+    public CapabilitiesDatasetMetadataLink getCapabilitiesDatasetMetadataLink() {
+        return capDatasetMetadataLink;
     }
 
-    public void setEventId(long eventId) {
-        this.eventId = eventId;
-    }
-
-    public short getI() {
-        return i;
-    }
-
-    public void setI(short i) {
-        this.i = i;
-    }
-
-    public String getTraceLine() {
-        return traceLine;
-    }
-
-    public void setTraceLine(String traceLine) {
-        this.traceLine = traceLine;
+    public void setCapabilitiesDatasetMetadataLink(CapabilitiesDatasetMetadataLink capabilitiesDatasetMetadataLink) {
+        this.capDatasetMetadataLink = capabilitiesDatasetMetadataLink;
     }
 }

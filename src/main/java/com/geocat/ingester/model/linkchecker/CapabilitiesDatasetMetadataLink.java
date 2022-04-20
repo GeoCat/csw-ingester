@@ -33,13 +33,38 @@
 
 package com.geocat.ingester.model.linkchecker;
 
+import com.geocat.ingester.model.linkchecker.helper.CapabilitiesDatasetMetadataLinkDatasetIdentifier;
+import com.geocat.ingester.model.linkchecker.helper.DatasetIdentifier;
+import com.geocat.ingester.model.linkchecker.helper.DatasetMetadataRecordDatasetIdentifier;
 import com.geocat.ingester.model.linkchecker.helper.PartialDownloadHint;
 import com.geocat.ingester.model.linkchecker.helper.RetrievableSimpleLink;
+import org.hibernate.annotations.BatchSize;
+import org.hibernate.annotations.Fetch;
+import org.hibernate.annotations.FetchMode;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 
 import javax.persistence.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
 
 // This models all the Dataset links from a capabilities (typically 1 per layer)
 @Entity
+@Table(
+        indexes = {
+                @Index(
+                        name = "CDML_capsha2_capjobid",
+                        columnList = "cap_sha2,cap_jobId",
+                        unique = false
+                ),
+                @Index(
+                        name = "CDML_jobid_fileid",
+                        columnList = "linkCheckJobId,fileIdentifier",
+                        unique = false
+                )
+        }
+)
 public class CapabilitiesDatasetMetadataLink extends RetrievableSimpleLink {
 
 //    // link to the actual Dataset document (if it resolves to one)
@@ -48,11 +73,30 @@ public class CapabilitiesDatasetMetadataLink extends RetrievableSimpleLink {
 //    @Fetch(value = FetchMode.JOIN)
 //    CapabilitiesRemoteDatasetMetadataDocument capabilitiesRemoteDatasetMetadataDocument;
 
-     @Column(columnDefinition = "text")
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumns(
+            {
+                    @JoinColumn(name="cap_sha2",referencedColumnName = "sha2"),
+                    @JoinColumn(name="cap_jobId",referencedColumnName = "linkcheckjobid")
+            }
+    )
+    private CapabilitiesDocument capabilitiesDocument;
+
+    @Column(columnDefinition = "text")
     String fileIdentifier;
 
-     @Column(columnDefinition = "text")
-    String datasetIdentifier;
+    @Column(columnDefinition = "text")
+    String parentIdentifier;
+
+    @OneToMany(mappedBy = "capDatasetMetadataLink",
+            cascade = {CascadeType.ALL}, fetch = FetchType.EAGER)
+    @Fetch(value = FetchMode.SELECT)
+    @BatchSize(size=500)
+    @OnDelete(action = OnDeleteAction.CASCADE)
+    List<CapabilitiesDatasetMetadataLinkDatasetIdentifier> datasetIdentifiers;
+
+    @Column(columnDefinition = "text")
+    String ogcLayerName; // <Layer><Name>  or <FeatureType><Name>
 
 //    //link back to the capabilities document this link came from
 //    @ManyToOne(fetch = FetchType.EAGER,cascade = {CascadeType.ALL})
@@ -62,21 +106,55 @@ public class CapabilitiesDatasetMetadataLink extends RetrievableSimpleLink {
     @Column(columnDefinition = "text")
     String identity;
 
+    //from the Capabilities document - authority (url) for the layer
+    @Column(columnDefinition = "text")
+    String authority;
+
+    //from the Capabilities document - authority (name of authority) for the layer
+    // i.e. <Identity authority="XYZ" .../>
+    @Column(columnDefinition = "text")
+    String authorityName;
+
     //store summary info about this
     @Column(columnDefinition = "text")
     String summary;
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE)
     private long capabilitiesDatasetMetadataLinkId;
 
 
     public CapabilitiesDatasetMetadataLink() {
         this.setPartialDownloadHint(PartialDownloadHint.METADATA_ONLY);
+        this.datasetIdentifiers=new ArrayList<>();
     }
 
     //---------------------------------------------------------------------------
 
+
+    public CapabilitiesDocument getCapabilitiesDocument() {
+        return capabilitiesDocument;
+    }
+
+    public void setCapabilitiesDocument(CapabilitiesDocument capabilitiesDocument) {
+        this.capabilitiesDocument = capabilitiesDocument;
+    }
+
+    public String getAuthority() {
+        return authority;
+    }
+
+    public void setAuthority(String authority) {
+        this.authority = authority;
+    }
+
+    public String getOgcLayerName() {
+        return ogcLayerName;
+    }
+
+    public void setOgcLayerName(String ogcLayerName) {
+        this.ogcLayerName = ogcLayerName;
+    }
 
     public String getFileIdentifier() {
         return fileIdentifier;
@@ -86,12 +164,13 @@ public class CapabilitiesDatasetMetadataLink extends RetrievableSimpleLink {
         this.fileIdentifier = fileIdentifier;
     }
 
-    public String getDatasetIdentifier() {
-        return datasetIdentifier;
+    public List<CapabilitiesDatasetMetadataLinkDatasetIdentifier> getDatasetIdentifiers() {
+        return datasetIdentifiers;
     }
 
-    public void setDatasetIdentifier(String datasetIdentifier) {
-        this.datasetIdentifier = datasetIdentifier;
+    public void setDatasetIdentifiers(List<DatasetIdentifier> datasetIdentifiers) {
+        this.datasetIdentifiers = datasetIdentifiers.stream().map(x->new CapabilitiesDatasetMetadataLinkDatasetIdentifier(x,this)).collect(Collectors.toList());
+        // this.datasetIdentifiers = datasetIdentifiers;
     }
 
     public long getCapabilitiesDatasetMetadataLinkId() {
@@ -102,6 +181,13 @@ public class CapabilitiesDatasetMetadataLink extends RetrievableSimpleLink {
         this.capabilitiesDatasetMetadataLinkId = capabilitiesDatasetMetadataLinkId;
     }
 
+    public String getAuthorityName() {
+        return authorityName;
+    }
+
+    public void setAuthorityName(String authorityName) {
+        this.authorityName = authorityName;
+    }
 
     public String getIdentity() {
         return identity;
@@ -109,6 +195,14 @@ public class CapabilitiesDatasetMetadataLink extends RetrievableSimpleLink {
 
     public void setIdentity(String identity) {
         this.identity = identity;
+    }
+
+    public String getParentIdentifier() {
+        return parentIdentifier;
+    }
+
+    public void setParentIdentifier(String parentIdentifier) {
+        this.parentIdentifier = parentIdentifier;
     }
 
     //---------------------------------------------------------------------------
@@ -130,8 +224,10 @@ public class CapabilitiesDatasetMetadataLink extends RetrievableSimpleLink {
         String result = "CapabilitiesDatasetMetadataLink {\n";
         result += "      capabilitiesDatasetMetadataLinkId: " + capabilitiesDatasetMetadataLinkId + "\n";
         result += "      identity: " + identity + "\n";
+        result += "      authority: " + authority + "\n";
         result += "      file Identifier: " + fileIdentifier + "\n";
-        result += "      dataset identifier: " + datasetIdentifier + "\n";
+        //  result += "      dataset identifier: " + datasetIdentifier + "\n";
+        result += "      ogcLayerName: " + ogcLayerName + "\n";
 
         result += "\n";
         result += super.toString();

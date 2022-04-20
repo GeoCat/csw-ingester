@@ -42,12 +42,41 @@ import java.time.ZonedDateTime;
 
 // represents a run of the link checker
 @Entity
-public class LinkCheckJob extends UpdateCreateDateTimeEntity {
+public class LinkCheckJob extends UpdateCreateDateTimeEntity  {
 
 
     @Id
     @Column(columnDefinition = "varchar(40)")
     private String jobId;
+
+    /**
+     *   When making HTTP/S requests, should we use (old) jobs in the HttpRequestCache?
+     */
+    boolean useOtherJobsHTTPCache ;
+
+    /**
+     *  When the job is COMPLETE (or ERROR or USERABORT), should the data (for this job)
+     *  be deleted from the HttpRequestCache?
+     */
+    boolean deleteHTTPCacheWhenComplete ;
+
+    /**
+     *  When downloading data, what is the maximum number of LinkToData links to follow?
+     */
+    int maxDataLinksToFollow  ;
+
+    /**
+     * When processing an ATOM link, and there are multiple entries in the Dataset Feed, how many should we
+     * follow?
+     * NOTE: when a "good" entry is found, no others will be attempted.
+     */
+    int maxAtomEntriesToAttempt ;
+
+    /**
+     * When processing an ATOM Dataset Feed Entry and there are multiple "section" links, how many should we follow?
+     * NOTE: ALL must be "good"
+     */
+    int maxAtomSectionLinksToFollow ;
 
     //GUID of the havest job this is processing
     @Column(columnDefinition = "varchar(40)")
@@ -55,7 +84,7 @@ public class LinkCheckJob extends UpdateCreateDateTimeEntity {
 
     //state of the overall process
     @Enumerated(EnumType.STRING)
-    private  LinkCheckJobState state;
+    private LinkCheckJobState state;
 
     //important messages - usually errors during a camel route
     @Column(columnDefinition = "text")
@@ -73,12 +102,14 @@ public class LinkCheckJob extends UpdateCreateDateTimeEntity {
     //how many of the harvested documents are dataset records?
     Long numberOfLocalDatasetRecords;
 
+    //how many of the harvested documents are dataset records?
+    Long numberOfNotProcessedDatasetRecords;
 
     //------------------------------------
 
     @PrePersist
     protected void onInsert() {
-      super.onInsert();
+        super.onInsert();
     }
 
     @PreUpdate
@@ -88,6 +119,57 @@ public class LinkCheckJob extends UpdateCreateDateTimeEntity {
 
     //------------------------------------
 
+
+
+
+
+    public int getMaxDataLinksToFollow() {
+        return maxDataLinksToFollow;
+    }
+
+    public void setMaxDataLinksToFollow(int maxDataLinksToFollow) {
+        this.maxDataLinksToFollow = maxDataLinksToFollow;
+    }
+
+    public int getMaxAtomEntriesToAttempt() {
+        return maxAtomEntriesToAttempt;
+    }
+
+    public void setMaxAtomEntriesToAttempt(int maxAtomEntriesToAttempt) {
+        this.maxAtomEntriesToAttempt = maxAtomEntriesToAttempt;
+    }
+
+    public int getMaxAtomSectionLinksToFollow() {
+        return maxAtomSectionLinksToFollow;
+    }
+
+    public void setMaxAtomSectionLinksToFollow(int maxAtomSectionLinksToFollow) {
+        this.maxAtomSectionLinksToFollow = maxAtomSectionLinksToFollow;
+    }
+
+    public boolean isUseOtherJobsHTTPCache() {
+        return useOtherJobsHTTPCache;
+    }
+
+    public void setUseOtherJobsHTTPCache(boolean useOtherJobsHTTPCache) {
+        this.useOtherJobsHTTPCache = useOtherJobsHTTPCache;
+    }
+
+    public boolean isDeleteHTTPCacheWhenComplete() {
+        return deleteHTTPCacheWhenComplete;
+    }
+
+    public void setDeleteHTTPCacheWhenComplete(boolean deleteHTTPCacheWhenComplete) {
+        this.deleteHTTPCacheWhenComplete = deleteHTTPCacheWhenComplete;
+    }
+
+    public Long getNumberOfNotProcessedDatasetRecords() {
+        return numberOfNotProcessedDatasetRecords;
+    }
+
+    public void setNumberOfNotProcessedDatasetRecords(Long numberOfNotProcessedDatasetRecords) {
+        this.numberOfNotProcessedDatasetRecords = numberOfNotProcessedDatasetRecords;
+    }
 
     public String getLongTermTag() {
         return longTermTag;
@@ -137,11 +219,11 @@ public class LinkCheckJob extends UpdateCreateDateTimeEntity {
         this.harvestJobId = harvestJobId;
     }
 
-    public  LinkCheckJobState getState() {
+    public LinkCheckJobState getState() {
         return state;
     }
 
-    public void setState( LinkCheckJobState state) {
+    public void setState(LinkCheckJobState state) {
         this.state = state;
     }
 

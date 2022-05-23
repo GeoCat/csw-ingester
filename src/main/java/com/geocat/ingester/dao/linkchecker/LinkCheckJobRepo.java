@@ -34,17 +34,20 @@
 package com.geocat.ingester.dao.linkchecker;
 
 
-import com.geocat.ingester.model.harvester.HarvestJob;
 import com.geocat.ingester.model.linkchecker.LinkCheckJob;
 import org.springframework.context.annotation.Scope;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
 import java.util.Optional;
 
 @Component
 @Scope("prototype")
 public interface LinkCheckJobRepo extends CrudRepository<LinkCheckJob, String> {
 
-    Optional<LinkCheckJob> findByHarvestJobId(String harvestJobId);
+    @Query("SELECT l FROM LinkCheckJob l WHERE l.harvestJobId = :harvestJobId AND l.createTimeUTC = (SELECT max(l2.createTimeUTC) FROM LinkCheckJob l2 WHERE l2.harvestJobId = :harvestJobId AND l2.state = 'COMPLETE')")
+    Optional<LinkCheckJob> findByHarvestJobId(@Param("harvestJobId") String harvestJobId);
 }

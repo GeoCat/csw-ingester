@@ -269,7 +269,21 @@ public class CatalogueService {
     }
 
     public void deleteMetadata(Set<Integer> metadataIds) {
-        metadataRepo.deleteAll();
+        metadataRepo.deleteAllByIdIn(metadataIds);
+    }
+
+    public void deleteMetadataByUuids(Set<String> metadataUuids) {
+        for(String metadataUuid: metadataUuids) {
+
+            Optional<Metadata> metadata = metadataRepo.findMetadataByUuid(metadataUuid);
+
+            if (metadata.isPresent()) {
+                List<OperationAllowed> operationAllowedList = operationAllowedRepo.findAllByMetadataId(metadata.get().getId());
+                operationAllowedRepo.deleteAll(operationAllowedList);
+
+                metadataRepo.delete(metadata.get());
+            }
+        }
     }
 
     private Optional<HarvesterSetting> retrieveHarvesterSetting( List<HarvesterSetting> harvesterSettingList, String name) {

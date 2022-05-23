@@ -1,9 +1,12 @@
 package com.geocat.ingester.events;
 
 import com.geocat.ingester.dao.harvester.HarvestJobRepo;
+import com.geocat.ingester.dao.ingester.IngestJobRepo;
+import com.geocat.ingester.events.ingest.AbortCommand;
 import com.geocat.ingester.model.IngesterConfig;
 import com.geocat.ingester.model.harvester.HarvestJob;
 import com.geocat.ingester.model.harvester.HarvestJobState;
+import com.geocat.ingester.model.ingester.IngestJob;
 import com.geocat.ingester.model.metadata.HarvesterConfiguration;
 import com.geocat.ingester.service.CatalogueService;
 import com.geocat.ingester.service.IngesterService;
@@ -27,10 +30,22 @@ public class IngestEventService {
     Logger log = LoggerFactory.getLogger(IngestEventService.class);
 
     @Autowired
+    IngestJobRepo ingestJobRepo;
+
+    @Autowired
     private HarvestJobRepo harvestJobRepo;
 
     @Autowired
     public CatalogueService catalogueService;
+
+    public AbortCommand createAbortEvent(String processID) throws Exception {
+        Optional<IngestJob> job = ingestJobRepo.findById(processID);
+        if (!job.isPresent())
+            throw new Exception("could not find processID="+processID);
+        AbortCommand result = new AbortCommand(processID);
+
+        return result;
+    }
 
     //calls validate on the (parsed) input message
     public void validateIngesterConfig(Message message) throws Exception {

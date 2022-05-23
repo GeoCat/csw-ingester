@@ -4,6 +4,7 @@ package com.geocat.ingester.routes.queuebased;
 import com.geocat.ingester.eventprocessor.MainLoopRouteCreator;
 import com.geocat.ingester.eventprocessor.RedirectEvent;
 import com.geocat.ingester.events.IngestRequestedEvent;
+import com.geocat.ingester.events.ingest.AbortCommand;
 import com.geocat.ingester.events.ingest.ActualIngestCompleted;
 import com.geocat.ingester.events.ingest.ActualIngestStartCommand;
 import com.geocat.ingester.service.IngestJobService;
@@ -29,7 +30,7 @@ public class IngestMainOrchestrator extends SpringRouteBuilder {
 
         mainLoopRouteCreator.createEventProcessingLoop(this,
                 "activemq:" + myJMSQueueName,
-                new Class[]{IngestRequestedEvent.class, ActualIngestCompleted.class},
+                new Class[]{IngestRequestedEvent.class, ActualIngestCompleted.class, AbortCommand.class},
                 Arrays.asList(
                         new RedirectEvent(ActualIngestStartCommand.class, "activemq:" + ActualIngestCollectionOrchestrator.myJMSQueueName)
                 )

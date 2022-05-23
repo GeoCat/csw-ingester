@@ -26,7 +26,7 @@ public class EventProcessor_ActualIngestCompleted extends BaseEventProcessor<Act
 
     @Override
     public EventProcessor_ActualIngestCompleted externalProcessing() {
-        ingestJobService.updateIngestJobStateInDB(getInitiatingEvent().getJobId(), IngestJobState.RECORDS_PROCESSED);
+        ingestJobService.updateIngestJobStateInDB(getInitiatingEvent().getJobId(), IngestJobState.COMPLETE);
         return this;
     }
 

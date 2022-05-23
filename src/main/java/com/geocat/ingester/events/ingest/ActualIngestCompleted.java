@@ -5,23 +5,15 @@ import com.geocat.ingester.events.Event;
 
 public class ActualIngestCompleted extends Event {
 
-    private String harvestId;
-    private String jobId;
+     private String jobId;
 
     public ActualIngestCompleted() {
     }
 
-    public ActualIngestCompleted(String harvestId) {
-        this.harvestId = harvestId;
+    public ActualIngestCompleted(String jobId) {
+        this.jobId = jobId;
     }
 
-    public String getHarvestId() {
-        return harvestId;
-    }
-
-    public void setHarvestId(String harvestId) {
-        this.harvestId = harvestId;
-    }
 
     public String getJobId() {
         return jobId;

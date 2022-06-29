@@ -140,7 +140,13 @@ public class CatalogueService {
 
             });
 
-            metadataList.add(metadata);
+            int pos = metadataList.indexOf(metadata);
+
+            if (pos > -1) {
+                metadataList.set(pos, metadata);
+            } else {
+                metadataList.add(metadata);
+            }
         }
 
         metadataRepo.saveAll(metadataList);

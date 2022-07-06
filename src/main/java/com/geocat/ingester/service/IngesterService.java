@@ -80,6 +80,11 @@ public class IngesterService {
         return  (ingestJob.getState() != IngestJobState.ERROR) && (ingestJob.getState() != IngestJobState.USERABORT);
     }
 
+    public List<EndpointJob> findEndpointJobs(String processId, String harvestJobId) throws Exception {
+        List<EndpointJob> endpointJobList = endpointJobRepo.findByHarvestJobId(harvestJobId);
+        return endpointJobList;
+    }
+
     /**
      * Executes the ingester process.
      *

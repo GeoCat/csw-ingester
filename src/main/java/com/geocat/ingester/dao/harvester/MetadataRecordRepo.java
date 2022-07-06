@@ -21,6 +21,7 @@ public interface MetadataRecordRepo extends CrudRepository<MetadataRecord, Strin
 
     long countMetadataRecordByEndpointJobId(long endPointJobId);
 
+
     @Query("select new com.geocat.ingester.model.harvester.MetadataRecordXml(r.recordIdentifier, r.sha2, b.textValue) from MetadataRecord r join BlobStorage b ON r.sha2 = b.sha2 where r.endpointJobId = :endpointJobId order by r.metadataRecordId")
     Page<MetadataRecordXml> findMetadataRecordWithXmlByEndpointJobId(@Param("endpointJobId") long endpointJobId, Pageable pageable);
 }

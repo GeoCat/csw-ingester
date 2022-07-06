@@ -4,6 +4,10 @@ import com.geocat.ingester.eventprocessor.MainLoopRouteCreator;
 import com.geocat.ingester.eventprocessor.RedirectEvent;
 import com.geocat.ingester.events.ingest.ActualIngestCompleted;
 import com.geocat.ingester.events.ingest.ActualIngestStartCommand;
+import com.geocat.ingester.events.ingest.DeleteRecordsCommand;
+import com.geocat.ingester.events.ingest.IndexRecordsCommand;
+import com.geocat.ingester.events.ingest.IngestEndpointCommand;
+import com.geocat.ingester.events.ingest.IngestEndpointGroupCommand;
 import org.apache.camel.spring.SpringRouteBuilder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -24,7 +28,11 @@ public class ActualIngestCollectionOrchestrator extends SpringRouteBuilder {
 
         mainLoopRouteCreator.createEventProcessingLoop(this,
                 "activemq:" + myJMSQueueName,
-                new Class[]{ActualIngestStartCommand.class},
+                new Class[]{ActualIngestStartCommand.class,
+                        IngestEndpointCommand.class,
+                        IngestEndpointGroupCommand.class,
+                        IndexRecordsCommand.class,
+                        DeleteRecordsCommand.class},
                 Arrays.asList(new RedirectEvent(ActualIngestCompleted.class, "activemq:"+IngestMainOrchestrator.myJMSQueueName))
         );
 

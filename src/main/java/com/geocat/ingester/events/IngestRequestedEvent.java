@@ -7,6 +7,7 @@ public class IngestRequestedEvent extends Event {
     public IngestRequestedEvent() {
     }
 
+
     public String getHarvestJobId() {
         return harvestJobId;
     }

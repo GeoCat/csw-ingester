@@ -11,7 +11,7 @@ public class DeleteRecordsCommand extends Event {
     public DeleteRecordsCommand() {
     }
 
-    public DeleteRecordsCommand(String jobId, String harvesterJobId,String endpointJobId) {
+    public DeleteRecordsCommand(String jobId, String harvesterJobId ) {
         this.jobId = jobId;
         this.harvesterJobId = harvesterJobId;
      }

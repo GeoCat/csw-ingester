@@ -2,7 +2,10 @@ package com.geocat.ingester.eventprocessor.processors.ingest;
 
 import com.geocat.ingester.eventprocessor.BaseEventProcessor;
 import com.geocat.ingester.events.Event;
+import com.geocat.ingester.events.ingest.DeleteRecordsCommand;
 import com.geocat.ingester.events.ingest.IndexRecordsCommand;
+import com.geocat.ingester.model.ingester.IngestJobState;
+import com.geocat.ingester.service.IngestJobService;
 import com.geocat.ingester.service.IngesterService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,6 +23,8 @@ public class EventProcessor_IndexRecordsCommand extends BaseEventProcessor<Index
 
     Logger logger = LoggerFactory.getLogger(EventProcessor_IngestEndpointCommand.class);
 
+    @Autowired
+    IngestJobService ingestJobService;
 
     @Autowired
     IngesterService ingesterService;
@@ -41,7 +46,11 @@ public class EventProcessor_IndexRecordsCommand extends BaseEventProcessor<Index
 
     @Override
     public List<Event> newEventProcessing() throws Exception {
+        IndexRecordsCommand cmd = getInitiatingEvent();
+
         List<Event> result =  new ArrayList<>();
+        result.add(new DeleteRecordsCommand(cmd.getJobId(), cmd.getHarvesterJobId()));
+        ingestJobService.updateIngestJobStateInDB(cmd.getJobId(), IngestJobState.DELETING_RECORDS);
 
         return result;
     }

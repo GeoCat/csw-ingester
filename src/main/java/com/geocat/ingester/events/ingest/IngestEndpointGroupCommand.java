@@ -7,18 +7,20 @@ public class IngestEndpointGroupCommand extends Event {
 
     private String harvesterJobId;
     private String jobId;
+    String linkCheckJobId;
     private long endpointJobId;
     private long from ;
     private long to  ;
     private long pageNumber;
     private long pageSize;
-
+    private long ingestEndpointGroupId;
 
     public IngestEndpointGroupCommand() {
     }
 
     public IngestEndpointGroupCommand(String jobId,
                                       String harvesterJobId,
+                                      String linkCheckJobId,
                                       long endpointJobId,
                                       long pageNumber,
                                       long pageSize,
@@ -26,6 +28,7 @@ public class IngestEndpointGroupCommand extends Event {
                                       long to) {
         this.jobId = jobId;
         this.harvesterJobId = harvesterJobId;
+        this.linkCheckJobId = linkCheckJobId;
         this.endpointJobId = endpointJobId;
         this.pageNumber = pageNumber;
         this.pageSize = pageSize;
@@ -35,6 +38,22 @@ public class IngestEndpointGroupCommand extends Event {
 
     //--
 
+
+    public String getLinkCheckJobId() {
+        return linkCheckJobId;
+    }
+
+    public void setLinkCheckJobId(String linkCheckJobId) {
+        this.linkCheckJobId = linkCheckJobId;
+    }
+
+    public long getIngestEndpointGroupId() {
+        return ingestEndpointGroupId;
+    }
+
+    public void setIngestEndpointGroupId(long ingestEndpointGroupId) {
+        this.ingestEndpointGroupId = ingestEndpointGroupId;
+    }
 
     public String getHarvesterJobId() {
         return harvesterJobId;
@@ -100,5 +119,6 @@ public class IngestEndpointGroupCommand extends Event {
                 +", pageSize="+pageSize+", pageNumber="+pageNumber
                 +" (from="+from+", to="+to+")";
     }
+
 
 }

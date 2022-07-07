@@ -11,7 +11,7 @@ public class IndexRecordsCommand extends Event {
     public IndexRecordsCommand() {
     }
 
-    public IndexRecordsCommand(String jobId, String harvesterJobId,String endpointJobId) {
+    public IndexRecordsCommand(String jobId, String harvesterJobId) {
         this.jobId = jobId;
         this.harvesterJobId = harvesterJobId;
     }

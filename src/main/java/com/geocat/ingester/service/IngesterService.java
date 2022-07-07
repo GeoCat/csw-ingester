@@ -3,14 +3,15 @@ package com.geocat.ingester.service;
 import com.geocat.ingester.dao.harvester.EndpointJobRepo;
 import com.geocat.ingester.dao.harvester.HarvestJobRepo;
 import com.geocat.ingester.dao.harvester.MetadataRecordRepo;
+import com.geocat.ingester.dao.ingester.IngestEndpointGroupRepo;
 import com.geocat.ingester.dao.ingester.IngestJobRepo;
 import com.geocat.ingester.dao.linkchecker.*;
 import com.geocat.ingester.exception.GeoNetworkClientException;
 import com.geocat.ingester.geonetwork.client.GeoNetworkClient;
 import com.geocat.ingester.model.harvester.EndpointJob;
 import com.geocat.ingester.model.harvester.HarvestJob;
-import com.geocat.ingester.model.harvester.HarvestJobState;
 import com.geocat.ingester.model.harvester.MetadataRecordXml;
+import com.geocat.ingester.model.ingester.IngestEndpointGroup;
 import com.geocat.ingester.model.ingester.IngestJob;
 import com.geocat.ingester.model.ingester.IngestJobState;
 
@@ -59,6 +60,10 @@ public class IngesterService {
 
     @Autowired
     private LinkCheckJobRepo linkCheckJobRepo;
+
+    @Autowired
+    IngestEndpointGroupRepo ingestEndpointGroupRepo;
+
 
 //    @Autowired
 //   Autowired private LocalServiceMetadataRecordRepo localServiceMetadataRecordRepo;
@@ -302,7 +307,7 @@ public class IngesterService {
      * @param processId
      * @throws GeoNetworkClientException
      */
-    private void deleteRecords(List<String> metadataIds, String processId) {
+    public void deleteRecords(List<String> metadataIds, String processId) {
         int batchSize = 50;
 
         int totalPages = (int) Math.ceil(metadataIds.size() * 1.0 / batchSize * 1.0);
@@ -388,4 +393,80 @@ public class IngesterService {
             metadata.addIndicator(indicatorName, indicator.toString());
         }
     }
+
+    static Object lockobj = new Object();
+
+    private IngestEndpointGroup update(IngestEndpointGroup ingestEndpointGroup) {
+        synchronized (lockobj) {
+            IngestEndpointGroup result= ingestEndpointGroupRepo.save(ingestEndpointGroup);
+            ingestJobService.updateIngestJobStateInDBIngestedRecords(
+                    ingestEndpointGroup.getIngestJobId(),
+                    ingestEndpointGroupRepo.countCompleteIngestRecordsForJob(ingestEndpointGroup.getIngestJobId())
+            );
+            return result;
+        }
+    }
+
+    public boolean ingestComplete(String ingestJobId) {
+        synchronized (lockobj) {
+            long nNotdone = ingestEndpointGroupRepo.countUncompleteGroupsForJob(ingestJobId);
+            return (nNotdone == 0);
+        }
+    }
+
+    public boolean ingestEndpointGroupsComplete(String jobid, long enpointId) {
+        synchronized (lockobj) {
+            long nNotdone = ingestEndpointGroupRepo.countUncompleteGroupsByEndpoint(jobid,enpointId);
+            return (nNotdone == 0);
+        }
+    }
+
+    //main work of the ingest
+    // this should take a group of objects (i.e. 200) from an endpoint
+    // and insert them into GN
+    public IngestEndpointGroup ingestGroup(IngestEndpointGroup ingestEndpointGroup) throws Exception {
+
+        Pageable pageableRequest = PageRequest.of(
+                (int) ingestEndpointGroup.getPageNumber(),
+                (int) ingestEndpointGroup.getPageSize()
+        );
+
+        Optional<HarvestJob> harvestJob = harvestJobRepo.findById(ingestEndpointGroup.getHarvestJobId());
+        if (!harvestJob.isPresent()) {
+            log.info("No harvester job related found with harvest job id " +  ingestEndpointGroup.getHarvestJobId() + ".");
+            // TODO: throw Exception harvester job not found
+            throw new Exception("No harvester job related found with harvest job id " +  ingestEndpointGroup.getHarvestJobId() + ".");
+        }
+
+        Optional<HarvesterConfiguration> harvesterConfigurationOptional =
+                catalogueService.retrieveHarvesterConfiguration(harvestJob.get().getLongTermTag());
+
+        if (!harvesterConfigurationOptional.isPresent())
+            throw new Exception("could not find GN harvester config for "+harvestJob.get().getLongTermTag());
+
+        Page<MetadataRecordXml> metadataRecordList =
+                metadataRecordRepo.findMetadataRecordWithXmlByEndpointJobId(ingestEndpointGroup.getEndpointId(), pageableRequest);
+
+        // Process metadata indicators
+        if (!StringUtils.isEmpty(ingestEndpointGroup.getLinkCheckJobId())) {
+            final String linkCheckJobIdAux = ingestEndpointGroup.getLinkCheckJobId();
+
+            metadataRecordList.forEach(r -> {
+                fillMetadataIndicators(r, linkCheckJobIdAux);
+            });
+        }
+        Map<String, Boolean> metadataIds = new HashMap<>();
+        metadataIds.putAll(
+                catalogueService.addOrUpdateMetadataRecords(
+                        metadataRecordList.toList(),
+                        harvesterConfigurationOptional.get(),
+                        ingestEndpointGroup.getHarvestJobId()
+                )
+        );
+
+        ingestEndpointGroup.setNumberRecordsIngested((long) metadataRecordList.stream().count());
+        return update(ingestEndpointGroup);
+    }
+
+
 }

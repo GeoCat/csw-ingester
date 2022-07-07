@@ -9,19 +9,29 @@ public class IngestEndpointCommand extends Event {
 
     private String harvesterJobId;
     private String jobId;
+    String linkCheckJobId;
     private long endpointJobId;
 
     public IngestEndpointCommand() {
     }
 
-    public IngestEndpointCommand(String jobId, String harvesterJobId,long endpointJobId) {
+    public IngestEndpointCommand(String jobId, String harvesterJobId,String linkCheckJobId,long endpointJobId) {
         this.jobId = jobId;
         this.harvesterJobId = harvesterJobId;
         this.endpointJobId = endpointJobId;
+        this.linkCheckJobId = linkCheckJobId;
     }
 
     //--
 
+
+    public String getLinkCheckJobId() {
+        return linkCheckJobId;
+    }
+
+    public void setLinkCheckJobId(String linkCheckJobId) {
+        this.linkCheckJobId = linkCheckJobId;
+    }
 
     public String getHarvesterJobId() {
         return harvesterJobId;

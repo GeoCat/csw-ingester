@@ -33,21 +33,18 @@
 
 package com.geocat.ingester.dao.linkchecker;
 
-import com.geocat.ingester.model.linkchecker.LinkCheckJob;
-import com.geocat.ingester.model.linkchecker.ServiceDocumentLink;
+import com.geocat.ingester.model.linkchecker.DatasetDocumentLink;
 import org.springframework.context.annotation.Scope;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
-import java.util.Optional;
 
 
 @Component
 @Scope("prototype")
-public interface ServiceDocumentLinkRepo extends CrudRepository<ServiceDocumentLink, Long> {
+public interface DatasetDocumentLinkRepo extends CrudRepository<DatasetDocumentLink, Long> {
 
-    Optional<ServiceDocumentLink> findFirstByLinkCheckJobIdAndSha2(String linkCheckJobId, String sha2);
+    List<DatasetDocumentLink> findByLinkCheckJobIdAndSha2(String linkCheckJobId, String Sha2);
 
-    List<ServiceDocumentLink> findByLinkCheckJobIdAndSha2(String linkCheckJobId, String Sha2);
 }

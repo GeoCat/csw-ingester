@@ -71,7 +71,7 @@ public class Metadata implements Serializable {
     @OneToMany(mappedBy="id.metadataId",  fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     private Set<OperationAllowed> privileges = new HashSet<OperationAllowed>();
 
-    @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL, orphanRemoval = true)
     @JoinColumn(name="metadata_id", nullable=false)
     private Set<MetadataIndicator> indicators = new HashSet<MetadataIndicator>();
 

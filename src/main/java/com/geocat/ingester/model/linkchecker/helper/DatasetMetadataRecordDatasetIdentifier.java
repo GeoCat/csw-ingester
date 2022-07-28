@@ -33,7 +33,11 @@
 
 package com.geocat.ingester.model.linkchecker.helper;
 
-import javax.persistence.*;
+import javax.persistence.CascadeType;
+import javax.persistence.DiscriminatorValue;
+import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.ManyToOne;
 
 @Entity
 @DiscriminatorValue("DDMDRecordDatasetIdentifier")
@@ -52,7 +56,7 @@ public class DatasetMetadataRecordDatasetIdentifier extends DatasetIdentifier{
         super(id.getIdentifierNodeType(),id.getCode(),id.getCodeSpace());
     }
 
-    public DatasetMetadataRecordDatasetIdentifier(DatasetIdentifier id, DatasetMetadataRecord r ) {
+    public DatasetMetadataRecordDatasetIdentifier(DatasetIdentifier id,DatasetMetadataRecord r ) {
         this(id);
         this.datasetMetadataRecord = r;
     }

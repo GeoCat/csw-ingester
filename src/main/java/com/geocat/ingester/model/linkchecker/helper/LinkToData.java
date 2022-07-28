@@ -33,11 +33,29 @@
 
 package com.geocat.ingester.model.linkchecker.helper;
 
-import javax.persistence.*;
+import javax.persistence.CascadeType;
+import javax.persistence.Column;
+import javax.persistence.DiscriminatorColumn;
+import javax.persistence.DiscriminatorType;
+import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
+import javax.persistence.FetchType;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.Index;
+import javax.persistence.Inheritance;
+import javax.persistence.InheritanceType;
+import javax.persistence.ManyToOne;
+import javax.persistence.MappedSuperclass;
+import javax.persistence.OneToOne;
+import javax.persistence.Table;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 
 @Entity(name="linktodata")
@@ -48,7 +66,7 @@ import java.util.Map;
 //                        columnList = "datasetmetadatarecord_datasetmetadatadocumentid",
 //                        unique = false
 //                ),
-/*                @Index(
+                @Index(
                         name = "link2data_ogcrequest_ogcrequestid_idx",
                         columnList = "ogcrequest_ogcrequestid",
                         unique = false
@@ -62,7 +80,17 @@ import java.util.Map;
                         name = "link2data_linkcheckjobid_idx",
                         columnList = "linkcheckjobid",
                         unique = false
-                )*/
+                ),
+                @Index(
+                        name = "link2data_linktodata_id_idx",
+                        columnList = "linktodata_id",
+                        unique = false
+                ),
+                @Index(
+                        name = "link2data_linkcheckjobid_datasetmetadatafileidentifier_idx",
+                        columnList = "linkcheckjobid,datasetmetadatafileidentifier",
+                        unique = false
+                )
         })
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
 @DiscriminatorColumn(name = "linkType",
@@ -102,10 +130,10 @@ public class LinkToData {
     public LinkToData() {
     }
 
-    public LinkToData(String linkcheckjobid, String sha2, String capabilitiesdocumenttype, DatasetMetadataRecord datasetMetadataRecord) {
+    public LinkToData(String linkcheckjobid, String sha2, String capabilitiesdocumenttype,DatasetMetadataRecord datasetMetadataRecord) {
         this.linkCheckJobId = linkcheckjobid;
         this.capabilitiesSha2 = sha2;
-       // this.datasetMetadataRecord = datasetMetadataRecord;
+        // this.datasetMetadataRecord = datasetMetadataRecord;
         if (datasetMetadataRecord !=null)
             this.datasetMetadataFileIdentifier = datasetMetadataRecord.getFileIdentifier();
         if  ( (capabilitiesdocumenttype !=null) && (!capabilitiesdocumenttype.isEmpty()))
@@ -200,17 +228,17 @@ public class LinkToData {
                 "     capabilitiesDocumentType: " + capabilitiesDocumentType+ "\n" ;
     }
 
-   public String key() {
+    public String key() {
         return linkCheckJobId + "::"+capabilitiesSha2;
-   }
+    }
 
 
     public static List<LinkToData> unique(List<LinkToData> all) {
         Map<String,LinkToData> result = new HashMap<>();
         for (LinkToData link :all ){
-                String hash = link.key();
-                if (!result.containsKey(hash))
-                    result.put(hash, link);
+            String hash = link.key();
+            if (!result.containsKey(hash))
+                result.put(hash, link);
         }
         return new ArrayList(result.values());
     }

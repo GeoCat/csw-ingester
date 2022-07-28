@@ -49,6 +49,11 @@ import javax.persistence.*;
                         name = "datasetmetadatarecord_datasetmetadatadocumentid_index",
                         columnList = "datasetMetadataRecord_datasetMetadataDocumentId",
                         unique = false
+                ),
+                @Index(
+                        name = "datasetmetadatarecord_linkCheckJobIdsha2_index",
+                        columnList = "linkcheckjobid,sha2",
+                        unique = false
                 )
         }
 )

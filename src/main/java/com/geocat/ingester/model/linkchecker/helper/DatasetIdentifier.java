@@ -33,9 +33,23 @@
 
 package com.geocat.ingester.model.linkchecker.helper;
 
-import com.geocat.ingester.model.linkchecker.helper.DatasetIdentifierNodeType;
-
-import javax.persistence.*;
+import javax.persistence.Column;
+import javax.persistence.DiscriminatorColumn;
+import javax.persistence.DiscriminatorType;
+import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
+import javax.persistence.FetchType;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.Index;
+import javax.persistence.Inheritance;
+import javax.persistence.InheritanceType;
+import javax.persistence.JoinColumn;
+import javax.persistence.JoinColumns;
+import javax.persistence.ManyToOne;
+import javax.persistence.Table;
 
 @Entity
 @Table(
@@ -49,6 +63,16 @@ import javax.persistence.*;
                 @Index(
                         name = "dsid_cap",
                         columnList = "capdatasetmetadatalink_capabilitiesdatasetmetadatalinkid",
+                        unique = false
+                ),
+                @Index(
+                        name = "dsid_code_idx",
+                        columnList = "code",
+                        unique = false
+                ),
+                @Index(
+                        name = "ops_on_idx",
+                        columnList = "operatesOnLink_operatesOnLinkId",
                         unique = false
                 )
         })
@@ -74,17 +98,17 @@ public class DatasetIdentifier {
 
 
 
+
     //---
     public DatasetIdentifier() {}
 
-    public DatasetIdentifier(DatasetIdentifierNodeType identifierNodeType, String code, String codeSpace) {
+    public DatasetIdentifier(DatasetIdentifierNodeType identifierNodeType, String code, String codeSpace ) {
         this.identifierNodeType = identifierNodeType;
         this.code = code;
         this.codeSpace = codeSpace;
     }
 
     //---
-
 
 
 
@@ -127,10 +151,10 @@ public class DatasetIdentifier {
 
     @Override
     public String toString() {
-        return "DatasetIdentifier{" +
-                "identifierType=" + identifierNodeType +
-                 ", code='" + code +
+        return " " +
+                "(" + identifierNodeType +
+                ") code='" + code +
                 "', codeSpace='" + codeSpace +
-                "'}";
+                "'";
     }
 }

@@ -35,12 +35,16 @@ package com.geocat.ingester.model.linkchecker.helper;
 
 import com.geocat.ingester.model.linkchecker.OperatesOnLink;
 
-import javax.persistence.*;
+import javax.persistence.CascadeType;
+import javax.persistence.DiscriminatorValue;
+import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.ManyToOne;
 
 
 @Entity
 @DiscriminatorValue("OperatesOnLnkDatasetIdentifier")
-public class OperatesOnLinkDatasetIdentifier extends DatasetIdentifier{
+public class OperatesOnLinkDatasetIdentifier extends DatasetIdentifier {
 
     @ManyToOne(fetch = FetchType.EAGER,cascade = {CascadeType.PERSIST,CascadeType.MERGE})
     OperatesOnLink operatesOnLink;

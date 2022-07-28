@@ -34,11 +34,14 @@
 package com.geocat.ingester.dao.linkchecker;
 
 import com.geocat.ingester.model.linkchecker.LocalServiceMetadataRecord;
+import com.geocat.ingester.model.linkchecker.helper.ServiceMetadataDocumentState;
 import com.geocat.ingester.model.linkchecker.helper.StatusQueryItem;
 import org.springframework.context.annotation.Scope;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -47,13 +50,34 @@ import java.util.List;
 @Scope("prototype")
 public interface LocalServiceMetadataRecordRepo extends CrudRepository<LocalServiceMetadataRecord, Long> {
 
+    @Transactional
+    @Modifying
+    @Query(value="UPDATE LocalServiceMetadataRecord lsmr SET lsmr.state = :newState WHERE lsmr.serviceMetadataDocumentId = :id ")
+    void updateState(long id, ServiceMetadataDocumentState newState);
 
+    @Transactional
+    @Modifying
+    @Query(value="UPDATE LocalServiceMetadataRecord lsmr SET lsmr.state = :newState WHERE lsmr.serviceMetadataDocumentId = :id and (lsmr.state <> 'NOT_APPLICABLE')")
+    void updateStateNotApplicable(long id, ServiceMetadataDocumentState newState);
 
-    List<LocalServiceMetadataRecord> findAllByFileIdentifierAndLinkCheckJobId(String fileIdentifier, String linkCheckJobId);
 
     LocalServiceMetadataRecord findFirstByLinkCheckJobIdAndSha2(String linkCheckJobId, String sha2);
 
     List<LocalServiceMetadataRecord> findByLinkCheckJobId(String linkCheckJobId);
+
+    LocalServiceMetadataRecord findFirstByFileIdentifierAndLinkCheckJobId(String fileID,String linkCheckJobId);
+
+    List<LocalServiceMetadataRecord> findByFileIdentifierAndLinkCheckJobId(String fileID,String linkCheckJobId);
+
+    LocalServiceMetadataRecord findFirstByFileIdentifier(String fileID);
+
+    List<LocalServiceMetadataRecord> findByFileIdentifier(String fileID);
+
+
+    @Query(value = "SELECT servicemetadatadocumentid FROM servicemetadatarecord   WHERE linkcheckjobid = ?1",
+            nativeQuery = true
+    )
+    List<Long> searchAllServiceIds(String linkCheckJobId);
 
 
     long countByLinkCheckJobId(String LinkCheckJobId);

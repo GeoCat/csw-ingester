@@ -459,7 +459,9 @@ public class IngesterService {
             if (vl instanceof OGCLinkToData) {
                 OGCLinkToData ogcLinkToData = (OGCLinkToData) vl;
                 addIndicator(metadata, "INDICATOR_DOWNLOAD_SERVICE_LAYERNAME", ogcLinkToData.getOgcLayerName());
-                addIndicator(metadata, "INDICATOR_DOWNLOAD_SERVICE_LAYERLINK", ogcLinkToData.getOgcRequest().getFinalURL());
+                if (ogcLinkToData.getOgcRequest() != null) {
+                    addIndicator(metadata, "INDICATOR_DOWNLOAD_SERVICE_LAYERLINK", ogcLinkToData.getOgcRequest().getFinalURL());
+                }
             } else if (vl instanceof SimpleStoredQueryDataLink) {
                 SimpleStoredQueryDataLink simpleStoredQueryDataLink = (SimpleStoredQueryDataLink) vl;
                 addIndicator(metadata, "INDICATOR_DOWNLOAD_SERVICE_LAYERLINK", simpleStoredQueryDataLink.getOgcRequest().getFinalURL());

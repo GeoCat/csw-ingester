@@ -417,7 +417,9 @@ public class IngesterService {
             if (vl instanceof OGCLinkToData) {
                 OGCLinkToData ogcLinkToData = (OGCLinkToData) vl;
                 addIndicator(metadata, "INDICATOR_VIEW_SERVICE_LAYERNAME", ogcLinkToData.getOgcLayerName());
-                addIndicator(metadata, "INDICATOR_VIEW_SERVICE_LAYERLINK", ogcLinkToData.getOgcRequest().getFinalURL());
+                if (ogcLinkToData.getOgcRequest() != null) {
+                    addIndicator(metadata, "INDICATOR_VIEW_SERVICE_LAYERLINK", ogcLinkToData.getOgcRequest().getFinalURL());
+                }
             }
 
             List<ServiceDocumentLink> serviceDocumentLinks = serviceDocumentLinkRepo.findByLinkCheckJobIdAndSha2(linkCheckJobId, capabilitiesSha2);

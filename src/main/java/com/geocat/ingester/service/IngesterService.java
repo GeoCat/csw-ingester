@@ -390,7 +390,7 @@ public class IngesterService {
             value = currentValue + "|" + value;
         }
 
-        metadata.addIndicator(indicatorName, value);
+        metadata.addIndicator(indicatorName, Optional.ofNullable(value).orElse(""));
     }
 
     private void addIndicator(MetadataRecordXml metadata, String indicatorName, IndicatorStatus indicatorStatus) {
@@ -483,7 +483,11 @@ public class IngesterService {
                 }
             } else if (vl instanceof SimpleStoredQueryDataLink) {
                 SimpleStoredQueryDataLink simpleStoredQueryDataLink = (SimpleStoredQueryDataLink) vl;
-                addOrUpdateIndicator(metadata, "INDICATOR_DOWNLOAD_SERVICE_LAYERLINK", simpleStoredQueryDataLink.getOgcRequest().getFinalURL());
+                if (simpleStoredQueryDataLink.getOgcRequest() != null) {
+                    addOrUpdateIndicator(metadata, "INDICATOR_DOWNLOAD_SERVICE_LAYERLINK", simpleStoredQueryDataLink.getOgcRequest().getFinalURL());
+                } else {
+                    addOrUpdateIndicator(metadata, "INDICATOR_DOWNLOAD_SERVICE_LAYERLINK", "");
+                }
             } else if (vl instanceof SimpleAtomLinkToData) {
                 SimpleAtomLinkToData simpleAtomLinkToData = (SimpleAtomLinkToData) vl;
 

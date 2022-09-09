@@ -318,7 +318,7 @@ public class IngesterService {
                 int toR = (i == totalPages - 1)?metadataIds.size():(to-1);
                 log.info("Deleting old harvested metadata records from " +  Math.max(1, i * batchSize) + " to " + toR + " of " + metadataIds.size());
 
-                catalogueService.deleteMetadata(new HashSet(metadataIds.subList(from , to)));
+                catalogueService.deleteMetadataByUuids(new HashSet(metadataIds.subList(from , to)));
                 // Commented: to do local delete due to ECAS auth in GeoNetwork the csw-ingester can't use GeoNetwork API
                 //geoNetworkClient.delete(metadataIds.subList(from , to));
 
@@ -384,6 +384,15 @@ public class IngesterService {
         }
     }
 
+    private void addOrUpdateIndicator(MetadataRecordXml metadata, String indicatorName, String value) {
+        String currentValue = metadata.getIndicatorValue(indicatorName);
+        if (StringUtils.hasLength(currentValue)) {
+            value = currentValue + "|" + value;
+        }
+
+        metadata.addIndicator(indicatorName, value);
+    }
+
     private void addIndicator(MetadataRecordXml metadata, String indicatorName, IndicatorStatus indicatorStatus) {
         if (indicatorStatus != null) {
             metadata.addIndicator(indicatorName, indicatorStatus.toString());
@@ -416,9 +425,11 @@ public class IngesterService {
 
             if (vl instanceof OGCLinkToData) {
                 OGCLinkToData ogcLinkToData = (OGCLinkToData) vl;
-                addIndicator(metadata, "INDICATOR_VIEW_SERVICE_LAYERNAME", ogcLinkToData.getOgcLayerName());
+                addOrUpdateIndicator(metadata, "INDICATOR_VIEW_SERVICE_LAYERNAME", ogcLinkToData.getOgcLayerName());
                 if (ogcLinkToData.getOgcRequest() != null) {
-                    addIndicator(metadata, "INDICATOR_VIEW_SERVICE_LAYERLINK", ogcLinkToData.getOgcRequest().getFinalURL());
+                    addOrUpdateIndicator(metadata, "INDICATOR_VIEW_SERVICE_LAYERLINK", ogcLinkToData.getOgcRequest().getFinalURL());
+                } else {
+                    addOrUpdateIndicator(metadata, "INDICATOR_VIEW_SERVICE_LAYERLINK", "");
                 }
             }
 
@@ -428,7 +439,9 @@ public class IngesterService {
                 ServiceMetadataRecord serviceMetadataRecord = documentLink.getLocalServiceMetadataRecord();
 
                 if (serviceMetadataRecord != null) {
-                    addIndicator(metadata, "INDICATOR_VIEW_SERVICE_IDENTIFIER", serviceMetadataRecord.getFileIdentifier());
+                    addOrUpdateIndicator(metadata, "INDICATOR_VIEW_SERVICE_IDENTIFIER", serviceMetadataRecord.getFileIdentifier());
+                } else {
+                    addOrUpdateIndicator(metadata, "INDICATOR_VIEW_SERVICE_IDENTIFIER", "");
                 }
             }
 
@@ -440,7 +453,9 @@ public class IngesterService {
                 DatasetMetadataRecord datasetMetadataRecord = documentLink.getDatasetMetadataRecord();
 
                 if (datasetMetadataRecord != null) {
-                    addIndicator(metadata, "INDICATOR_VIEW_SERVICE_IDENTIFIER", datasetMetadataRecord.getFileIdentifier());
+                    addOrUpdateIndicator(metadata, "INDICATOR_VIEW_SERVICE_IDENTIFIER", datasetMetadataRecord.getFileIdentifier());
+                } else {
+                    addOrUpdateIndicator(metadata, "INDICATOR_VIEW_SERVICE_IDENTIFIER", "");
                 }
             }
         });
@@ -460,21 +475,23 @@ public class IngesterService {
 
             if (vl instanceof OGCLinkToData) {
                 OGCLinkToData ogcLinkToData = (OGCLinkToData) vl;
-                addIndicator(metadata, "INDICATOR_DOWNLOAD_SERVICE_LAYERNAME", ogcLinkToData.getOgcLayerName());
+                addOrUpdateIndicator(metadata, "INDICATOR_DOWNLOAD_SERVICE_LAYERNAME", ogcLinkToData.getOgcLayerName());
                 if (ogcLinkToData.getOgcRequest() != null) {
-                    addIndicator(metadata, "INDICATOR_DOWNLOAD_SERVICE_LAYERLINK", ogcLinkToData.getOgcRequest().getFinalURL());
+                    addOrUpdateIndicator(metadata, "INDICATOR_DOWNLOAD_SERVICE_LAYERLINK", ogcLinkToData.getOgcRequest().getFinalURL());
+                } else {
+                    addOrUpdateIndicator(metadata, "INDICATOR_DOWNLOAD_SERVICE_LAYERLINK", "");
                 }
             } else if (vl instanceof SimpleStoredQueryDataLink) {
                 SimpleStoredQueryDataLink simpleStoredQueryDataLink = (SimpleStoredQueryDataLink) vl;
-                addIndicator(metadata, "INDICATOR_DOWNLOAD_SERVICE_LAYERLINK", simpleStoredQueryDataLink.getOgcRequest().getFinalURL());
+                addOrUpdateIndicator(metadata, "INDICATOR_DOWNLOAD_SERVICE_LAYERLINK", simpleStoredQueryDataLink.getOgcRequest().getFinalURL());
             } else if (vl instanceof SimpleAtomLinkToData) {
                 SimpleAtomLinkToData simpleAtomLinkToData = (SimpleAtomLinkToData) vl;
 
                 List<AtomActualDataEntry> atomActualDataEntryList = simpleAtomLinkToData.getAtomActualDataEntryList();
                 for (AtomActualDataEntry atomActualDataEntry : atomActualDataEntryList) {
-                    if (atomActualDataEntry.getSuccessfullyDownloaded()) {
+                    if ((atomActualDataEntry.getSuccessfullyDownloaded() != null) && atomActualDataEntry.getSuccessfullyDownloaded()) {
                         atomActualDataEntry.getAtomDataRequestList().forEach(r -> {
-                            addIndicator(metadata, "INDICATOR_DOWNLOAD_SERVICE_LAYERLINK",  r.getFinalURL());
+                            addOrUpdateIndicator(metadata, "INDICATOR_DOWNLOAD_SERVICE_LAYERLINK",  r.getFinalURL());
                         });
                         break;
                     }
@@ -487,7 +504,9 @@ public class IngesterService {
                 ServiceMetadataRecord serviceMetadataRecord = serviceDocumentLink.getLocalServiceMetadataRecord();
 
                 if (serviceMetadataRecord != null) {
-                    addIndicator(metadata, "INDICATOR_DOWNLOAD_SERVICE_IDENTIFIER", serviceMetadataRecord.getFileIdentifier());
+                    addOrUpdateIndicator(metadata, "INDICATOR_DOWNLOAD_SERVICE_IDENTIFIER", serviceMetadataRecord.getFileIdentifier());
+                } else {
+                    addOrUpdateIndicator(metadata, "INDICATOR_DOWNLOAD_SERVICE_IDENTIFIER", "");
                 }
             }
         });

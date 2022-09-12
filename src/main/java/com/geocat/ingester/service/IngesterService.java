@@ -1,5 +1,7 @@
 package com.geocat.ingester.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.geocat.ingester.dao.harvester.EndpointJobRepo;
 import com.geocat.ingester.dao.harvester.HarvestJobRepo;
 import com.geocat.ingester.dao.harvester.MetadataRecordRepo;
@@ -16,6 +18,7 @@ import com.geocat.ingester.model.ingester.IngestJobState;
 
 import com.geocat.ingester.model.linkchecker.*;
 import com.geocat.ingester.model.linkchecker.helper.*;
+import com.geocat.ingester.model.linkedresources.LinkedResourceIndicator;
 import com.geocat.ingester.model.metadata.HarvesterConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,6 +31,8 @@ import org.springframework.util.StringUtils;
 
 import java.util.*;
 import java.util.stream.Collectors;
+
+import static org.apache.camel.model.dataformat.JsonLibrary.Gson;
 
 @Service
 //@Transactional("metadataTransactionManager")
@@ -418,47 +423,54 @@ public class IngesterService {
                         l.getCapabilitiesDocumentType().equals(CapabilitiesType.WMTS)
         ).collect(Collectors.toList());
 
+
+        List<LinkedResourceIndicator> viewServiceLinkedResourceIndicators = new ArrayList<>();
+
         // Calculate the indicators for the view links
         viewLinks.stream().forEach(vl -> {
             String capabilitiesSha2 = vl.getCapabilitiesSha2();
 
-
             if (vl instanceof OGCLinkToData) {
                 OGCLinkToData ogcLinkToData = (OGCLinkToData) vl;
-                addOrUpdateIndicator(metadata, "INDICATOR_VIEW_SERVICE_LAYERNAME", ogcLinkToData.getOgcLayerName());
-                if (ogcLinkToData.getOgcRequest() != null) {
-                    addOrUpdateIndicator(metadata, "INDICATOR_VIEW_SERVICE_LAYERLINK", ogcLinkToData.getOgcRequest().getFinalURL());
-                } else {
-                    addOrUpdateIndicator(metadata, "INDICATOR_VIEW_SERVICE_LAYERLINK", "");
+
+                String layerName = ogcLinkToData.getOgcLayerName();
+                String layerLink = (ogcLinkToData.getOgcRequest() != null)?ogcLinkToData.getOgcRequest().getFinalURL():"";
+
+                List<ServiceDocumentLink> serviceDocumentLinks = serviceDocumentLinkRepo.findByLinkCheckJobIdAndSha2(linkCheckJobId, capabilitiesSha2);
+
+                List<String> associatedServiceIds = new ArrayList<>();
+
+                for (ServiceDocumentLink documentLink : serviceDocumentLinks) {
+                    ServiceMetadataRecord serviceMetadataRecord = documentLink.getLocalServiceMetadataRecord();
+
+                    if (serviceMetadataRecord != null) {
+                        associatedServiceIds.add(serviceMetadataRecord.getFileIdentifier());
+                    }
                 }
-            }
 
-            List<ServiceDocumentLink> serviceDocumentLinks = serviceDocumentLinkRepo.findByLinkCheckJobIdAndSha2(linkCheckJobId, capabilitiesSha2);
+                // For simplified INSPIRE model - the links can come from the dataset document as well
+                List<DatasetDocumentLink> datasetDocumentLinks = datasetDocumentLinkRepo.findByLinkCheckJobIdAndSha2(linkCheckJobId, capabilitiesSha2);
 
-            for (ServiceDocumentLink documentLink : serviceDocumentLinks) {
-                ServiceMetadataRecord serviceMetadataRecord = documentLink.getLocalServiceMetadataRecord();
+                for (DatasetDocumentLink documentLink : datasetDocumentLinks) {
+                    DatasetMetadataRecord datasetMetadataRecord = documentLink.getDatasetMetadataRecord();
 
-                if (serviceMetadataRecord != null) {
-                    addOrUpdateIndicator(metadata, "INDICATOR_VIEW_SERVICE_IDENTIFIER", serviceMetadataRecord.getFileIdentifier());
-                } else {
-                    addOrUpdateIndicator(metadata, "INDICATOR_VIEW_SERVICE_IDENTIFIER", "");
+                    if (datasetMetadataRecord != null) {
+                        associatedServiceIds.add(datasetMetadataRecord.getFileIdentifier());
+                    }
                 }
-            }
 
-
-            // For simplified INSPIRE model - the links can come from the dataset document as well
-            List<DatasetDocumentLink> datasetDocumentLinks = datasetDocumentLinkRepo.findByLinkCheckJobIdAndSha2(linkCheckJobId, capabilitiesSha2);
-
-            for (DatasetDocumentLink documentLink : datasetDocumentLinks) {
-                DatasetMetadataRecord datasetMetadataRecord = documentLink.getDatasetMetadataRecord();
-
-                if (datasetMetadataRecord != null) {
-                    addOrUpdateIndicator(metadata, "INDICATOR_VIEW_SERVICE_IDENTIFIER", datasetMetadataRecord.getFileIdentifier());
-                } else {
-                    addOrUpdateIndicator(metadata, "INDICATOR_VIEW_SERVICE_IDENTIFIER", "");
-                }
+                LinkedResourceIndicator indicator = new LinkedResourceIndicator(layerName, layerLink, associatedServiceIds);
+                viewServiceLinkedResourceIndicators.add(indicator);
             }
         });
+
+        ObjectMapper objectMapper = new ObjectMapper();
+        try {
+            addOrUpdateIndicator(metadata, "INDICATOR_VIEW_SERVICE_LINKED_RESOURCES",
+                    objectMapper.writeValueAsString(viewServiceLinkedResourceIndicators));
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+        }
     }
 
     private void processDownloadLinksIndicators(MetadataRecordXml metadata, List<LinkToData> metadataLinks, String linkCheckJobId) {
@@ -468,35 +480,38 @@ public class IngesterService {
                         l.getCapabilitiesDocumentType().equals(CapabilitiesType.WFS)
         ).collect(Collectors.toList());
 
+        List<LinkedResourceIndicator> downloadServiceLinkedResourceIndicators = new ArrayList<>();
+
         // Calculate the indicators for the service download links
         downloadLinks.stream().forEach(vl -> {
             String capabilitiesSha2 = vl.getCapabilitiesSha2();
 
+            String layerName = "";
+            String layerLink = "";
+            List<String> associatedServiceIds = new ArrayList<>();
 
             if (vl instanceof OGCLinkToData) {
                 OGCLinkToData ogcLinkToData = (OGCLinkToData) vl;
-                addOrUpdateIndicator(metadata, "INDICATOR_DOWNLOAD_SERVICE_LAYERNAME", ogcLinkToData.getOgcLayerName());
-                if (ogcLinkToData.getOgcRequest() != null) {
-                    addOrUpdateIndicator(metadata, "INDICATOR_DOWNLOAD_SERVICE_LAYERLINK", ogcLinkToData.getOgcRequest().getFinalURL());
-                } else {
-                    addOrUpdateIndicator(metadata, "INDICATOR_DOWNLOAD_SERVICE_LAYERLINK", "");
-                }
+
+                layerName = ogcLinkToData.getOgcLayerName();
+                layerLink = (ogcLinkToData.getOgcRequest() != null)?ogcLinkToData.getOgcRequest().getFinalURL():"";
+
             } else if (vl instanceof SimpleStoredQueryDataLink) {
                 SimpleStoredQueryDataLink simpleStoredQueryDataLink = (SimpleStoredQueryDataLink) vl;
-                if (simpleStoredQueryDataLink.getOgcRequest() != null) {
-                    addOrUpdateIndicator(metadata, "INDICATOR_DOWNLOAD_SERVICE_LAYERLINK", simpleStoredQueryDataLink.getOgcRequest().getFinalURL());
-                } else {
-                    addOrUpdateIndicator(metadata, "INDICATOR_DOWNLOAD_SERVICE_LAYERLINK", "");
-                }
+
+                layerLink = (simpleStoredQueryDataLink.getOgcRequest() != null)?simpleStoredQueryDataLink.getOgcRequest().getFinalURL():"";
+
             } else if (vl instanceof SimpleAtomLinkToData) {
                 SimpleAtomLinkToData simpleAtomLinkToData = (SimpleAtomLinkToData) vl;
 
+                // TODO: Review
                 List<AtomActualDataEntry> atomActualDataEntryList = simpleAtomLinkToData.getAtomActualDataEntryList();
                 for (AtomActualDataEntry atomActualDataEntry : atomActualDataEntryList) {
                     if ((atomActualDataEntry.getSuccessfullyDownloaded() != null) && atomActualDataEntry.getSuccessfullyDownloaded()) {
-                        atomActualDataEntry.getAtomDataRequestList().forEach(r -> {
-                            addOrUpdateIndicator(metadata, "INDICATOR_DOWNLOAD_SERVICE_LAYERLINK",  r.getFinalURL());
-                        });
+                        for (AtomDataRequest atomDataRequest : atomActualDataEntry.getAtomDataRequestList()) {
+                            layerLink = atomDataRequest.getFinalURL();
+                            break;
+                        }
                         break;
                     }
                 }
@@ -508,11 +523,20 @@ public class IngesterService {
                 ServiceMetadataRecord serviceMetadataRecord = serviceDocumentLink.getLocalServiceMetadataRecord();
 
                 if (serviceMetadataRecord != null) {
-                    addOrUpdateIndicator(metadata, "INDICATOR_DOWNLOAD_SERVICE_IDENTIFIER", serviceMetadataRecord.getFileIdentifier());
-                } else {
-                    addOrUpdateIndicator(metadata, "INDICATOR_DOWNLOAD_SERVICE_IDENTIFIER", "");
+                    associatedServiceIds.add(serviceMetadataRecord.getFileIdentifier());
                 }
             }
+
+            LinkedResourceIndicator indicator = new LinkedResourceIndicator(layerName, layerLink, associatedServiceIds);
+            downloadServiceLinkedResourceIndicators.add(indicator);
         });
+
+        ObjectMapper objectMapper = new ObjectMapper();
+        try {
+            addOrUpdateIndicator(metadata, "INDICATOR_DOWNLOAD_SERVICE_LINKED_RESOURCES",
+                    objectMapper.writeValueAsString(downloadServiceLinkedResourceIndicators));
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+        }
     }
 }

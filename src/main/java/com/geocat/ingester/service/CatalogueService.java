@@ -10,27 +10,24 @@ import com.geocat.ingester.model.metadata.Metadata;
 import com.geocat.ingester.model.metadata.MetadataIndicator;
 import com.geocat.ingester.model.metadata.OperationAllowed;
 import com.geocat.ingester.model.metadata.OperationAllowedId;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
 //@Transactional("metadataTransactionManager")
 public class CatalogueService {
     private static final DateTimeFormatter DATE_PATTERN = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'");
+
+    Logger log = LoggerFactory.getLogger(CatalogueService.class);
 
     @Autowired
     private MetadataRepository metadataRepo;
@@ -191,6 +188,8 @@ public class CatalogueService {
         });
 
         operationAllowedRepo.saveAll(operationAllowedList);
+
+        metadataRepo.flush();
 
         return metadataUuidList;
     }

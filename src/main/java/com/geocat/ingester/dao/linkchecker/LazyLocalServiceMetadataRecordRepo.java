@@ -84,12 +84,14 @@ public class LazyLocalServiceMetadataRecordRepo {
             List results = query.getResultList();
 
             Optional<LocalServiceMetadataRecord> result = Optional.empty();
-            if (results.size() != 0)
+            if (results.size() != 0) {
                 result = Optional.of((LocalServiceMetadataRecord) results.get(0));
+            }
 
             return result;
         }
         finally {
+            entityManager.clear();
             entityManager.close();
         }
     }

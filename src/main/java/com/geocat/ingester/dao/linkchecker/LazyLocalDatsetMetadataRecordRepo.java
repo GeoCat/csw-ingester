@@ -82,12 +82,14 @@ public class LazyLocalDatsetMetadataRecordRepo {
             List results = query.getResultList();
 
             Optional<LocalDatasetMetadataRecord> result = Optional.empty();
-            if (results.size() != 0)
+            if (results.size() != 0) {
                 result = Optional.of((LocalDatasetMetadataRecord) results.get(0));
+            }
 
             return result;
         }
         finally {
+            entityManager.clear();
             entityManager.close();
         }
     }

@@ -50,4 +50,6 @@ public interface LinkCheckJobRepo extends CrudRepository<LinkCheckJob, String> {
 
     @Query("SELECT l FROM LinkCheckJob l WHERE l.harvestJobId = :harvestJobId AND l.createTimeUTC = (SELECT max(l2.createTimeUTC) FROM LinkCheckJob l2 WHERE l2.harvestJobId = :harvestJobId AND l2.state = 'COMPLETE')")
     Optional<LinkCheckJob> findByHarvestJobId(@Param("harvestJobId") String harvestJobId);
+
+    List<LinkCheckJob> findByLongTermTag(String longTermTag);
 }

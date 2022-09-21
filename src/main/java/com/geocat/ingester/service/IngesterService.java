@@ -1,5 +1,7 @@
 package com.geocat.ingester.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.geocat.ingester.dao.harvester.EndpointJobRepo;
 import com.geocat.ingester.dao.harvester.HarvestJobRepo;
 import com.geocat.ingester.dao.harvester.MetadataRecordRepo;
@@ -15,11 +17,9 @@ import com.geocat.ingester.model.ingester.IngestEndpointGroup;
 import com.geocat.ingester.model.ingester.IngestJob;
 import com.geocat.ingester.model.ingester.IngestJobState;
 
-import com.geocat.ingester.model.linkchecker.LinkCheckJob;
-import com.geocat.ingester.model.linkchecker.LocalDatasetMetadataRecord;
-import com.geocat.ingester.model.linkchecker.LocalServiceMetadataRecord;
-import com.geocat.ingester.model.linkchecker.helper.CapabilitiesType;
-import com.geocat.ingester.model.linkchecker.helper.IndicatorStatus;
+import com.geocat.ingester.model.linkchecker.*;
+import com.geocat.ingester.model.linkchecker.helper.*;
+import com.geocat.ingester.model.linkedresources.LinkedResourceIndicator;
 import com.geocat.ingester.model.metadata.HarvesterConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -76,6 +76,15 @@ public class IngesterService {
 
     @Autowired
     LazyLocalDatsetMetadataRecordRepo lazyLocalDatsetMetadataRecordRepo;
+
+    @Autowired
+    ServiceDocumentLinkRepo serviceDocumentLinkRepo;
+
+    @Autowired
+    DatasetDocumentLinkRepo datasetDocumentLinkRepo;
+
+    @Autowired
+    LinkToDataRepo linkToDataRepo;
 
     @Autowired
     private IngestJobRepo ingestJobRepo;
@@ -196,7 +205,7 @@ public class IngesterService {
             }
 
         } catch (Exception ex) {
-            ex.printStackTrace();
+            ex.printStackTrace();  log.error(harvestJobId+" error: " + ex.getMessage(), ex);
         }
 
         if (!continueProcessing(processId)) {
@@ -322,7 +331,7 @@ public class IngesterService {
                 int toR = (i == totalPages - 1)?metadataIds.size():(to-1);
                 log.info("Deleting old harvested metadata records from " +  Math.max(1, i * batchSize) + " to " + toR + " of " + metadataIds.size());
 
-                catalogueService.deleteMetadata(new HashSet(metadataIds.subList(from , to)));
+                catalogueService.deleteMetadataByUuids(new HashSet(metadataIds.subList(from , to)));
                 // Commented: to do local delete due to ECAS auth in GeoNetwork the csw-ingester can't use GeoNetwork API
                 //geoNetworkClient.delete(metadataIds.subList(from , to));
 
@@ -346,7 +355,7 @@ public class IngesterService {
      * @param linkCheckJobId
      */
     private void fillMetadataIndicators(MetadataRecordXml metadata, String linkCheckJobId) {
-       // List<LocalServiceMetadataRecord> localServiceMetadataRecord = localServiceMetadataRecordRepo.findAllByFileIdentifierAndLinkCheckJobId(metadata.getRecordIdentifier(), linkCheckJobId);
+        // List<LocalServiceMetadataRecord> localServiceMetadataRecord = localServiceMetadataRecordRepo.findAllByFileIdentifierAndLinkCheckJobId(metadata.getRecordIdentifier(), linkCheckJobId);
         Optional<LocalServiceMetadataRecord> localServiceMetadataRecord = lazyLocalServiceMetadataRecordRepo.searchFirstByFileIdentifierAndLinkCheckJobId(metadata.getRecordIdentifier(), linkCheckJobId);
 
 
@@ -357,10 +366,10 @@ public class IngesterService {
             addIndicator(metadata, "INDICATOR_CAPABILITIES_TYPE", localServiceMetadataRecord.get().getINDICATOR_CAPABILITIES_TYPE());
             addIndicator(metadata, "INDICATOR_CAPABILITIES_RESOLVES_TO_SERVICE", localServiceMetadataRecord.get().getINDICATOR_CAPABILITIES_RESOLVES_TO_SERVICE());
             addIndicator(metadata, "INDICATOR_CAPABILITIES_SERVICE_FILE_ID_MATCHES", localServiceMetadataRecord.get().getINDICATOR_CAPABILITIES_SERVICE_FILE_ID_MATCHES());
-           // addIndicator(metadata, "INDICATOR_CAPABILITIES_SERVICE_FULLY_MATCHES", localServiceMetadataRecord.get(0).getINDICATOR_CAPABILITIES_SERVICE_FULLY_MATCHES());
+            // addIndicator(metadata, "INDICATOR_CAPABILITIES_SERVICE_FULLY_MATCHES", localServiceMetadataRecord.get(0).getINDICATOR_CAPABILITIES_SERVICE_FULLY_MATCHES());
             addIndicator(metadata, "INDICATOR_RESOLVES_TO_CAPABILITIES", localServiceMetadataRecord.get().getINDICATOR_RESOLVES_TO_CAPABILITIES());
         } else {
-           // List<LocalDatasetMetadataRecord> localDatasetMetadataRecord = localDatasetMetadataRecordRepo.findAllByFileIdentifierAndLinkCheckJobId(metadata.getRecordIdentifier(), linkCheckJobId);
+            // List<LocalDatasetMetadataRecord> localDatasetMetadataRecord = localDatasetMetadataRecordRepo.findAllByFileIdentifierAndLinkCheckJobId(metadata.getRecordIdentifier(), linkCheckJobId);
             Optional<LocalDatasetMetadataRecord> localDatasetMetadataRecord = lazyLocalDatsetMetadataRecordRepo.searchFirstByFileIdentifierAndLinkCheckJobId(metadata.getRecordIdentifier(), linkCheckJobId);
 
             if (localDatasetMetadataRecord.isPresent()) {
@@ -371,9 +380,28 @@ public class IngesterService {
                 addIndicator(metadata, "INDICATOR_LAYER_MATCHES_DOWNLOAD", localDatasetMetadataRecord.get().getINDICATOR_LAYER_MATCHES_DOWNLOAD());
                 addIndicator(metadata, "INDICATOR_VIEW_LINK_TO_DATA", localDatasetMetadataRecord.get().getINDICATOR_VIEW_LINK_TO_DATA());
                 addIndicator(metadata, "INDICATOR_DOWNLOAD_LINK_TO_DATA", localDatasetMetadataRecord.get().getINDICATOR_DOWNLOAD_LINK_TO_DATA());
-            }
 
+                List<LinkToData> metadataLinks = linkToDataRepo.findAllByLinkCheckJobIdAndDatasetMetadataFileIdentifier(linkCheckJobId, localDatasetMetadataRecord.get().getFileIdentifier());
+                processViewLinksIndicators(metadata, metadataLinks, linkCheckJobId);
+                processDownloadLinksIndicators(metadata, metadataLinks, linkCheckJobId);
+
+            }
         }
+    }
+
+    private void addIndicator(MetadataRecordXml metadata, String indicatorName, String value) {
+        if (StringUtils.hasLength(value)) {
+            metadata.addIndicator(indicatorName, value);
+        }
+    }
+
+    private void addOrUpdateIndicator(MetadataRecordXml metadata, String indicatorName, String value) {
+        String currentValue = metadata.getIndicatorValue(indicatorName);
+        if (StringUtils.hasLength(currentValue)) {
+            value = currentValue + "|" + value;
+        }
+
+        metadata.addIndicator(indicatorName, Optional.ofNullable(value).orElse(""));
     }
 
     private void addIndicator(MetadataRecordXml metadata, String indicatorName, IndicatorStatus indicatorStatus) {
@@ -393,6 +421,132 @@ public class IngesterService {
             metadata.addIndicator(indicatorName, indicator.toString());
         }
     }
+
+
+    private void processViewLinksIndicators(MetadataRecordXml metadata, List<LinkToData> metadataLinks, String linkCheckJobId) {
+        // Extract the view links
+        List<LinkToData> viewLinks = metadataLinks.stream().filter(l ->
+                l.getCapabilitiesDocumentType().equals(CapabilitiesType.WMS) ||
+                        l.getCapabilitiesDocumentType().equals(CapabilitiesType.WMTS)
+        ).collect(Collectors.toList());
+
+
+        List<LinkedResourceIndicator> viewServiceLinkedResourceIndicators = new ArrayList<>();
+
+        // Calculate the indicators for the view links
+        viewLinks.stream().forEach(vl -> {
+            String capabilitiesSha2 = vl.getCapabilitiesSha2();
+
+            if (vl instanceof OGCLinkToData) {
+                OGCLinkToData ogcLinkToData = (OGCLinkToData) vl;
+
+                String layerName = ogcLinkToData.getOgcLayerName();
+                String layerLink = (ogcLinkToData.getOgcRequest() != null)?ogcLinkToData.getOgcRequest().getFinalURL():"";
+
+                List<ServiceDocumentLink> serviceDocumentLinks = serviceDocumentLinkRepo.findByLinkCheckJobIdAndSha2(linkCheckJobId, capabilitiesSha2);
+
+                List<String> associatedServiceIds = new ArrayList<>();
+
+                for (ServiceDocumentLink documentLink : serviceDocumentLinks) {
+                    ServiceMetadataRecord serviceMetadataRecord = documentLink.getLocalServiceMetadataRecord();
+
+                    if (serviceMetadataRecord != null) {
+                        associatedServiceIds.add(serviceMetadataRecord.getFileIdentifier());
+                    }
+                }
+
+                // For simplified INSPIRE model - the links can come from the dataset document as well
+                List<DatasetDocumentLink> datasetDocumentLinks = datasetDocumentLinkRepo.findByLinkCheckJobIdAndSha2(linkCheckJobId, capabilitiesSha2);
+
+                for (DatasetDocumentLink documentLink : datasetDocumentLinks) {
+                    DatasetMetadataRecord datasetMetadataRecord = documentLink.getDatasetMetadataRecord();
+
+                    if (datasetMetadataRecord != null) {
+                        associatedServiceIds.add(datasetMetadataRecord.getFileIdentifier());
+                    }
+                }
+
+                LinkedResourceIndicator indicator = new LinkedResourceIndicator(layerName, layerLink, associatedServiceIds);
+                viewServiceLinkedResourceIndicators.add(indicator);
+            }
+        });
+
+        ObjectMapper objectMapper = new ObjectMapper();
+        try {
+            addOrUpdateIndicator(metadata, "INDICATOR_VIEW_SERVICE_LINKED_RESOURCES",
+                    objectMapper.writeValueAsString(viewServiceLinkedResourceIndicators));
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void processDownloadLinksIndicators(MetadataRecordXml metadata, List<LinkToData> metadataLinks, String linkCheckJobId) {
+        // Retrieve the service download links
+        List<LinkToData> downloadLinks = metadataLinks.stream().filter(l ->
+                l.getCapabilitiesDocumentType().equals(CapabilitiesType.Atom) ||
+                        l.getCapabilitiesDocumentType().equals(CapabilitiesType.WFS)
+        ).collect(Collectors.toList());
+
+        List<LinkedResourceIndicator> downloadServiceLinkedResourceIndicators = new ArrayList<>();
+
+        // Calculate the indicators for the service download links
+        downloadLinks.stream().forEach(vl -> {
+            String capabilitiesSha2 = vl.getCapabilitiesSha2();
+
+            String layerName = "";
+            String layerLink = "";
+            List<String> associatedServiceIds = new ArrayList<>();
+
+            if (vl instanceof OGCLinkToData) {
+                OGCLinkToData ogcLinkToData = (OGCLinkToData) vl;
+
+                layerName = ogcLinkToData.getOgcLayerName();
+                layerLink = (ogcLinkToData.getOgcRequest() != null)?ogcLinkToData.getOgcRequest().getFinalURL():"";
+
+            } else if (vl instanceof SimpleStoredQueryDataLink) {
+                SimpleStoredQueryDataLink simpleStoredQueryDataLink = (SimpleStoredQueryDataLink) vl;
+
+                layerLink = (simpleStoredQueryDataLink.getOgcRequest() != null)?simpleStoredQueryDataLink.getOgcRequest().getFinalURL():"";
+
+            } else if (vl instanceof SimpleAtomLinkToData) {
+                SimpleAtomLinkToData simpleAtomLinkToData = (SimpleAtomLinkToData) vl;
+
+                // TODO: Review
+                List<AtomActualDataEntry> atomActualDataEntryList = simpleAtomLinkToData.getAtomActualDataEntryList();
+                for (AtomActualDataEntry atomActualDataEntry : atomActualDataEntryList) {
+                    if ((atomActualDataEntry.getSuccessfullyDownloaded() != null) && atomActualDataEntry.getSuccessfullyDownloaded()) {
+                        for (AtomDataRequest atomDataRequest : atomActualDataEntry.getAtomDataRequestList()) {
+                            layerLink = atomDataRequest.getFinalURL();
+                            break;
+                        }
+                        break;
+                    }
+                }
+
+            }
+
+            List<ServiceDocumentLink> serviceDocumentLinks = serviceDocumentLinkRepo.findByLinkCheckJobIdAndSha2(linkCheckJobId, capabilitiesSha2);
+            for (ServiceDocumentLink serviceDocumentLink : serviceDocumentLinks) {
+                ServiceMetadataRecord serviceMetadataRecord = serviceDocumentLink.getLocalServiceMetadataRecord();
+
+                if (serviceMetadataRecord != null) {
+                    associatedServiceIds.add(serviceMetadataRecord.getFileIdentifier());
+                }
+            }
+
+            LinkedResourceIndicator indicator = new LinkedResourceIndicator(layerName, layerLink, associatedServiceIds);
+            downloadServiceLinkedResourceIndicators.add(indicator);
+        });
+
+        ObjectMapper objectMapper = new ObjectMapper();
+        try {
+            addOrUpdateIndicator(metadata, "INDICATOR_DOWNLOAD_SERVICE_LINKED_RESOURCES",
+                    objectMapper.writeValueAsString(downloadServiceLinkedResourceIndicators));
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+        }
+    }
+
 
     static Object lockobj = new Object();
 

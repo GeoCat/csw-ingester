@@ -31,23 +31,67 @@
  *  ==============================================================================
  */
 
-package com.geocat.ingester.dao.linkchecker;
-
-import com.geocat.ingester.model.linkchecker.LinkCheckJob;
-import com.geocat.ingester.model.linkchecker.ServiceDocumentLink;
-import org.springframework.context.annotation.Scope;
-import org.springframework.data.repository.CrudRepository;
-import org.springframework.stereotype.Component;
-
-import java.util.List;
-import java.util.Optional;
+package com.geocat.ingester.model.linkchecker.helper;
 
 
-@Component
-@Scope("prototype")
-public interface ServiceDocumentLinkRepo extends CrudRepository<ServiceDocumentLink, Long> {
+import com.geocat.ingester.model.linkchecker.AtomActualDataEntry;
 
-    Optional<ServiceDocumentLink> findFirstByLinkCheckJobIdAndSha2(String linkCheckJobId, String sha2);
+import javax.persistence.CascadeType;
+import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.ManyToOne;
 
-    List<ServiceDocumentLink> findByLinkCheckJobIdAndSha2(String linkCheckJobId, String Sha2);
+import static com.geocat.ingester.model.linkchecker.helper.PartialDownloadHint.ALWAYS_PARTIAL;
+
+
+@Entity
+public class AtomDataRequest extends RetrievableSimpleLink  {
+    @Id
+    @GeneratedValue(strategy = GenerationType.SEQUENCE)
+    private long atomDataRequestId;
+
+
+    @ManyToOne(fetch = FetchType.EAGER,cascade = {CascadeType.PERSIST,CascadeType.MERGE})
+    AtomActualDataEntry atomActualDataEntry;
+
+    Boolean successfullyDownloaded;
+
+
+    public AtomDataRequest() {
+        super();
+        setPartialDownloadHint(ALWAYS_PARTIAL);
+    }
+
+    public AtomDataRequest(String url ) {
+        this();
+        setRawURL(url);
+        setFixedURL(url);
+    }
+
+    public AtomActualDataEntry getAtomActualDataEntry() {
+        return atomActualDataEntry;
+    }
+
+    public void setAtomActualDataEntry(AtomActualDataEntry atomActualDataEntry) {
+        this.atomActualDataEntry = atomActualDataEntry;
+    }
+
+    public long getAtomDataRequestId() {
+        return atomDataRequestId;
+    }
+
+    public void setAtomDataRequestId(long atomDataRequestId) {
+        this.atomDataRequestId = atomDataRequestId;
+    }
+
+    public Boolean getSuccessfullyDownloaded() {
+        return successfullyDownloaded;
+    }
+
+    public void setSuccessfullyDownloaded(Boolean successfullyDownloaded) {
+        this.successfullyDownloaded = successfullyDownloaded;
+    }
 }

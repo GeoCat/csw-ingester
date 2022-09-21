@@ -49,6 +49,11 @@ import javax.persistence.*;
                         name = "servicemetadatarecord_servicemetadatadocumentid_index",
                         columnList = "serviceMetadataRecord_serviceMetadataDocumentId",
                         unique = false
+                ),
+                @Index(
+                        name = "servicemetadatarecord_linkCheckJobIdsha2_index",
+                        columnList = "linkcheckjobid,sha2",
+                        unique = false
                 )
         }
 )

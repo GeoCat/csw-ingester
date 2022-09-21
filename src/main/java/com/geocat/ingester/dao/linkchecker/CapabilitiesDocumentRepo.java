@@ -35,7 +35,9 @@ package com.geocat.ingester.dao.linkchecker;
 
 import com.geocat.ingester.model.linkchecker.CapabilitiesDocument;
 import com.geocat.ingester.model.linkchecker.helper.CapabilitiesType;
+import com.geocat.ingester.model.linkchecker.helper.SHA2JobIdCompositeKey;
 import org.springframework.context.annotation.Scope;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Component;
 
@@ -43,8 +45,11 @@ import java.util.List;
 
 @Component
 @Scope("prototype")
-public interface CapabilitiesDocumentRepo extends CrudRepository<CapabilitiesDocument, Long> {
+public interface CapabilitiesDocumentRepo extends CrudRepository<CapabilitiesDocument, SHA2JobIdCompositeKey> {
 
     List<CapabilitiesDocument> findByCapabilitiesDocumentType(CapabilitiesType type);
+
+
+    List<CapabilitiesDocument> findByLinkCheckJobId(String linkCheckJobId);
 
 }

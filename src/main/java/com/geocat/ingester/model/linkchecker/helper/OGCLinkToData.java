@@ -33,42 +33,73 @@
 
 package com.geocat.ingester.model.linkchecker.helper;
 
-
-import com.geocat.ingester.model.linkchecker.CapabilitiesDatasetMetadataLink;
+import com.geocat.ingester.model.linkchecker.OGCRequest;
+import org.hibernate.annotations.BatchSize;
+import org.hibernate.annotations.Fetch;
+import org.hibernate.annotations.FetchMode;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import javax.persistence.CascadeType;
+import javax.persistence.Column;
 import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
-import javax.persistence.ManyToOne;
-
+import javax.persistence.JoinColumn;
+import javax.persistence.OneToOne;
 
 @Entity
-@DiscriminatorValue("CapDSMDLinkDatasetIdentifier")
-public class CapabilitiesDatasetMetadataLinkDatasetIdentifier extends DatasetIdentifier {
+@DiscriminatorValue("OGCLinkToData")
+public class OGCLinkToData extends LinkToData {
 
-    @ManyToOne(fetch = FetchType.EAGER,cascade = {CascadeType.PERSIST,CascadeType.MERGE})
-    CapabilitiesDatasetMetadataLink capDatasetMetadataLink;
+    @OneToOne(cascade = CascadeType.ALL,
+            fetch = FetchType.EAGER)
+    @Fetch(value = FetchMode.JOIN)
+    @BatchSize(size=500)
+    @JoinColumn(name="ogcrequest_ogcrequestid")
+    // @OnDelete(action = OnDeleteAction.CASCADE)
+    OGCRequest ogcRequest; // might be null
 
-    public CapabilitiesDatasetMetadataLinkDatasetIdentifier() {super();}
+    @Column(columnDefinition = "text")
+    private String ogcLayerName;  //for simple (getmap/getfeature) WFS/WMS/WMTS, this is the Layer/FeatureType name
 
-    public CapabilitiesDatasetMetadataLinkDatasetIdentifier(DatasetIdentifierNodeType identifierNodeType, String code, String codeSpace) {
-        super(identifierNodeType,code,codeSpace);
+    //--
+
+
+    public OGCLinkToData() {
+        super();
     }
 
-    public CapabilitiesDatasetMetadataLinkDatasetIdentifier(DatasetIdentifier id) {
-        super(id.getIdentifierNodeType(),id.getCode(),id.getCodeSpace());
-    }
-    public CapabilitiesDatasetMetadataLinkDatasetIdentifier(DatasetIdentifier id,CapabilitiesDatasetMetadataLink r ) {
-        this(id);
-        this.capDatasetMetadataLink = r;
+    public OGCLinkToData(String linkcheckjobid, String sha2, String capabilitiesdocumenttype, DatasetMetadataRecord datasetMetadataRecord, String ogcLayerName) {
+        super(linkcheckjobid, sha2, capabilitiesdocumenttype, datasetMetadataRecord);
+        this.ogcLayerName = ogcLayerName;
     }
 
-    public CapabilitiesDatasetMetadataLink getCapabilitiesDatasetMetadataLink() {
-        return capDatasetMetadataLink;
+    public OGCLinkToData(String linkcheckjobid, String sha2, String capabilitiesdocumenttype, DatasetMetadataRecord datasetMetadataRecord ) {
+        super(linkcheckjobid, sha2, capabilitiesdocumenttype, datasetMetadataRecord);
     }
 
-    public void setCapabilitiesDatasetMetadataLink(CapabilitiesDatasetMetadataLink capabilitiesDatasetMetadataLink) {
-        this.capDatasetMetadataLink = capabilitiesDatasetMetadataLink;
+    @Override
+    public String key() {
+        return super.key() +"::"+getOgcLayerName();
+    }
+
+
+    public OGCRequest getOgcRequest() {
+        return ogcRequest;
+    }
+
+
+    public void setOgcRequest(OGCRequest ogcRequest) {
+        this.ogcRequest = ogcRequest;
+    }
+
+    public String getOgcLayerName() {
+        return ogcLayerName;
+    }
+
+    public void setOgcLayerName(String ogcLayerName) {
+        this.ogcLayerName = ogcLayerName;
     }
 }

@@ -25,6 +25,14 @@ public class MetadataRecordXml {
         indicators.put(name, value);
     }
 
+    public String getIndicatorValue(String name) {
+        if (indicators.containsKey(name)) {
+            return indicators.get(name);
+        } else {
+            return "";
+        }
+    }
+
     /*public String getMetadataRecordId() {
         return metadataRecordId;
     }

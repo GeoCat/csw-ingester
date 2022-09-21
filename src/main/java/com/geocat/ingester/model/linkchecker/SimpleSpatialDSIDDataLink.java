@@ -31,23 +31,68 @@
  *  ==============================================================================
  */
 
-package com.geocat.ingester.dao.linkchecker;
+package com.geocat.ingester.model.linkchecker;
 
-import com.geocat.ingester.model.linkchecker.LinkCheckJob;
-import com.geocat.ingester.model.linkchecker.ServiceDocumentLink;
-import org.springframework.context.annotation.Scope;
-import org.springframework.data.repository.CrudRepository;
-import org.springframework.stereotype.Component;
+import com.geocat.ingester.model.linkchecker.helper.DatasetMetadataRecord;
+import com.geocat.ingester.model.linkchecker.helper.OGCLinkToData;
 
-import java.util.List;
-import java.util.Optional;
+import javax.persistence.Column;
+import javax.persistence.DiscriminatorValue;
+import javax.persistence.Entity;
+
+@Entity
+@DiscriminatorValue("SimpleSpatialDSIDDataLink")
+public class SimpleSpatialDSIDDataLink extends OGCLinkToData {
+
+    public SimpleSpatialDSIDDataLink() {
+        super();
+    }
+
+    public SimpleSpatialDSIDDataLink(String linkcheckjobid, String sha2, String capabilitiesdocumenttype, DatasetMetadataRecord datasetMetadataRecord, String layerName) {
+        super(linkcheckjobid,sha2,capabilitiesdocumenttype,datasetMetadataRecord,layerName);
+    }
+
+    @Column(columnDefinition = "text")
+    private String code;
+
+    @Column(columnDefinition = "text")
+    private String codeSpace;
 
 
-@Component
-@Scope("prototype")
-public interface ServiceDocumentLinkRepo extends CrudRepository<ServiceDocumentLink, Long> {
+    //---
 
-    Optional<ServiceDocumentLink> findFirstByLinkCheckJobIdAndSha2(String linkCheckJobId, String sha2);
+    public String getCode() {
+        return code;
+    }
 
-    List<ServiceDocumentLink> findByLinkCheckJobIdAndSha2(String linkCheckJobId, String Sha2);
+    public void setCode(String code) {
+        this.code = code;
+    }
+
+    public String getCodeSpace() {
+        return codeSpace;
+    }
+
+    public void setCodeSpace(String codeSpace) {
+        this.codeSpace = codeSpace;
+    }
+
+
+//----
+
+
+    @Override
+    public String toString() {
+        return "SimpleSpatialDSIDDataLink{\n" +
+                super.toString() +
+                "code='" + code + '\'' +
+                ", codeSpace='" + codeSpace + '\'' +
+                '}';
+    }
+
+    @Override
+    public String key() {
+        return super.key() +"::"+getOgcLayerName();
+    }
+
 }

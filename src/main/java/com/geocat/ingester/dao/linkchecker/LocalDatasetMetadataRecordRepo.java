@@ -35,11 +35,14 @@ package com.geocat.ingester.dao.linkchecker;
 
 
 import com.geocat.ingester.model.linkchecker.LocalDatasetMetadataRecord;
+import com.geocat.ingester.model.linkchecker.helper.ServiceMetadataDocumentState;
 import com.geocat.ingester.model.linkchecker.helper.StatusQueryItem;
 import org.springframework.context.annotation.Scope;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -48,7 +51,30 @@ import java.util.List;
 @Scope("prototype")
 public interface LocalDatasetMetadataRecordRepo extends CrudRepository<LocalDatasetMetadataRecord, Long> {
 
-    List<LocalDatasetMetadataRecord> findAllByFileIdentifierAndLinkCheckJobId(String fileIdentifier, String linkCheckJobId);
+    @Transactional
+    @Modifying
+    @Query(value="UPDATE LocalDatasetMetadataRecord ldmr SET ldmr.state = :newState WHERE ldmr.datasetMetadataDocumentId = :id ")
+    void updateState(long id, ServiceMetadataDocumentState newState);
+
+    @Transactional
+    @Modifying
+    @Query(value="UPDATE LocalDatasetMetadataRecord ldmr SET ldmr.state = :newState WHERE ldmr.datasetMetadataDocumentId = :id and (ldmr.state <> 'NOT_APPLICABLE')")
+    void updateStateNotNotApplicatable(long id, ServiceMetadataDocumentState newState);
+
+    LocalDatasetMetadataRecord findFirstByFileIdentifierAndLinkCheckJobId(String fileID,String linkCheckJobId);
+
+    LocalDatasetMetadataRecord findFirstByFileIdentifier(String fileID);
+
+    List<LocalDatasetMetadataRecord> findByFileIdentifierAndLinkCheckJobId(String fileID,String linkCheckJobId);
+
+    List<LocalDatasetMetadataRecord> findByFileIdentifier(String fileID);
+
+
+    @Query(value = "SELECT datasetmetadatadocumentid FROM datasetmetadatarecord   WHERE linkcheckjobid = ?1",
+            nativeQuery = true
+    )
+    List<Long> searchAllDatasetIds(String linkCheckJobId);
+
 
     LocalDatasetMetadataRecord findFirstByLinkCheckJobIdAndSha2(String linkCheckJobId, String sha2);
 
